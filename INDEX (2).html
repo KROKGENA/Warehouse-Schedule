@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Режим работы склада — интерактивная диаграмма</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --line: #d8dee9;
+      --line-soft: #ebeff5;
+      --text: #172033;
+      --muted: #586273;
+      --pickup-bg: #dbeafe;
+      --pickup-br: #60a5fa;
+      --delivery-bg: #dcfce7;
+      --delivery-br: #4ade80;
+      --transfer-bg: #fef3c7;
+      --transfer-br: #f59e0b;
+      --danger: #dc2626;
+      --shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.15;
+    }
+
+    .title .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button, select, input, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    button:hover { background: #f8fafc; }
+    button.primary { background: #172033; color: #fff; border-color: #172033; }
+    button.primary:hover { background: #0f172a; }
+    button.danger { color: #fff; background: var(--danger); border-color: var(--danger); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(900px, 1fr) 360px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line-soft);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .card-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line-soft);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .card-head h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    .canvas-wrap {
+      overflow: auto;
+      border: 1px solid var(--line-soft);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    svg { display: block; }
+
+    .form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .field input, .field select, .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 78px;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .selected-box {
+      border-radius: 16px;
+      padding: 12px 14px;
+      border: 2px solid var(--line);
+      background: #fff;
+    }
+
+    .selected-box.pickup { background: var(--pickup-bg); border-color: var(--pickup-br); }
+    .selected-box.delivery { background: var(--delivery-bg); border-color: var(--delivery-br); }
+    .selected-box.transfer { background: var(--transfer-bg); border-color: var(--transfer-br); }
+
+    .tip {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 13px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    @media (max-width: 1280px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="title">
+        <h1>Интерактивная диаграмма режима работы склада</h1>
+        <div class="sub">Ось X: 08:00–20:00 с шагом 1 час. Ось Y: дни недели. События можно переносить и растягивать.</div>
+      </div>
+      <div class="actions">
+        <button id="addPickup">+ Самовывоз</button>
+        <button id="addDelivery">+ Доставка</button>
+        <button id="addTransfer">+ Перемещение</button>
+        <button id="resetBtn">Сброс</button>
+        <button id="exportBtn" class="primary">Экспорт JSON</button>
+      </div>
+    </div>
+
+    <div class="legend" style="margin-bottom:16px;">
+      <div class="pill"><span class="dot" style="background:#60a5fa"></span> Самовывоз</div>
+      <div class="pill"><span class="dot" style="background:#4ade80"></span> Доставка</div>
+      <div class="pill"><span class="dot" style="background:#f59e0b"></span> Перемещение</div>
+      <div class="pill">✳ XL-формат допустим в каждой машине перемещения</div>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <div class="card-head">
+          <h2>Поле моделирования</h2>
+        </div>
+        <div class="card-body">
+          <div class="canvas-wrap">
+            <svg id="gantt"></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Свойства события</h2>
+        </div>
+        <div class="card-body">
+          <div id="emptyState" class="tip">Выбери событие на диаграмме. Его можно перетаскивать по времени и между днями, а также растягивать стрелку за левую и правую ручку.</div>
+
+          <div id="editor" style="display:none;">
+            <div id="selectedBox" class="selected-box"></div>
+            <div class="form" style="margin-top:12px;">
+              <div class="field">
+                <label for="eventType">Тип</label>
+                <select id="eventType">
+                  <option value="pickup">Самовывоз</option>
+                  <option value="delivery">Доставка</option>
+                  <option value="transfer">Перемещение</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="eventTitle">Название</label>
+                <input id="eventTitle" />
+              </div>
+              <div class="field">
+                <label for="eventNote">Пояснение</label>
+                <textarea id="eventNote"></textarea>
+              </div>
+              <div class="field">
+                <label for="eventDay">День недели</label>
+                <select id="eventDay"></select>
+              </div>
+              <div class="grid2">
+                <div class="field">
+                  <label for="eventStart">Начало</label>
+                  <input id="eventStart" type="time" step="900" min="08:00" max="20:00" />
+                </div>
+                <div class="field">
+                  <label for="eventEnd">Окончание</label>
+                  <input id="eventEnd" type="time" step="900" min="08:00" max="20:00" />
+                </div>
+              </div>
+              <button id="deleteBtn" class="danger">Удалить событие</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DAYS = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"];
+    const DAY_INDEX = { "Понедельник": 0, "Вторник": 1, "Среда": 2, "Четверг": 3, "Пятница": 4 };
+    const START_HOUR = 8;
+    const END_HOUR = 20;
+    const HOUR_COUNT = END_HOUR - START_HOUR;
+    const HOUR_WIDTH = 96;
+    const DAY_HEIGHT = 96;
+    const HEADER_H = 58;
+    const LEFT_COL = 170;
+    const ROW_TOP_PAD = 18;
+    const ROW_ITEM_H = 46;
+    const PX_PER_MIN = HOUR_WIDTH / 60;
+    const MIN_DURATION = 30;
+    const SNAP_MIN = 15;
+
+    const TYPE_META = {
+      pickup: { label: "Самовывоз", emoji: "🚚", fill: "#dbeafe", stroke: "#60a5fa" },
+      delivery: { label: "Доставка", emoji: "📦", fill: "#dcfce7", stroke: "#4ade80" },
+      transfer: { label: "Перемещение", emoji: "🔁", fill: "#fef3c7", stroke: "#f59e0b" }
+    };
+
+    const INITIAL_EVENTS = [
+      {
+        id: 1,
+        type: "pickup",
+        day: 0,
+        start: 8 * 60,
+        end: 12 * 60,
+        title: "Самовывоз: заявки до 12:00",
+        note: "Реализации, созданные в 1С до 12:00 текущего дня, собираем и отгружаем в этот же день"
+      },
+      {
+        id: 2,
+        type: "pickup",
+        day: 0,
+        start: 12 * 60,
+        end: 20 * 60,
+        title: "Самовывоз: отгрузка день в день",
+        note: "Заезд на территорию до 19:00, отгрузка до 20:00"
+      },
+      {
+        id: 3,
+        type: "pickup",
+        day: 1,
+        start: 9 * 60,
+        end: 20 * 60,
+        title: "Самовывоз: заявки после 12:00 предыдущего дня",
+        note: "Заявки на самовывоз, созданные после 12:00 текущего дня, отгружаются на следующий рабочий день"
+      },
+      {
+        id: 4,
+        type: "pickup",
+        day: 1,
+        start: 9 * 60,
+        end: 19 * 60,
+        title: "Самовывоз: заезд на следующий рабочий день",
+        note: "Интервал отгрузки 09:00–20:00, заезд на территорию до 19:00"
+      },
+      {
+        id: 5,
+        type: "delivery",
+        day: 0,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Доставка: заявки до 18:00",
+        note: "Реализации, созданные в 1С до 18:00 текущего дня, отгружаются и доставляются через один рабочий день"
+      },
+      {
+        id: 6,
+        type: "delivery",
+        day: 3,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Пример доставки: четверг → понедельник",
+        note: "Заявка поступила в четверг до 18:00 — доставка в понедельник"
+      },
+      {
+        id: 7,
+        type: "delivery",
+        day: 4,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Пример доставки: пятница → вторник",
+        note: "Заявка поступила в пятницу до 18:00 — доставка во вторник"
+      },
+      {
+        id: 8,
+        type: "delivery",
+        day: 2,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Пример доставки: среда → пятница",
+        note: "Заявка поступила в среду до 18:00 — доставка в пятницу"
+      },
+      {
+        id: 9,
+        type: "transfer",
+        day: 0,
+        start: 8 * 60,
+        end: 17 * 60,
+        title: "Ступино → СПБ: приём заявок",
+        note: "Перемещения, созданные в 1С до 17:00 понедельника"
+      },
+      {
+        id: 10,
+        type: "transfer",
+        day: 1,
+        start: 14 * 60,
+        end: 20 * 60,
+        title: "Ступино → СПБ: отгрузка",
+        note: "Отгрузка во вторник с 14:00, перемещение один раз в неделю, XL-формат допустим"
+      },
+      {
+        id: 11,
+        type: "transfer",
+        day: 0,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Ступино → Шереметьево: приём заявок",
+        note: "Заявки, созданные в 1С до 18:00 понедельника"
+      },
+      {
+        id: 12,
+        type: "transfer",
+        day: 2,
+        start: 8 * 60,
+        end: 20 * 60,
+        title: "Ступино → Шереметьево: отгрузка",
+        note: "Отгрузка в среду, перемещение один раз в неделю, XL-формат допустим"
+      },
+      {
+        id: 13,
+        type: "transfer",
+        day: 0,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Ступино → Подольск: приём заявок 1",
+        note: "Заявки, созданные в 1С до 18:00 понедельника"
+      },
+      {
+        id: 14,
+        type: "transfer",
+        day: 2,
+        start: 8 * 60,
+        end: 20 * 60,
+        title: "Ступино → Подольск: отгрузка 1",
+        note: "Отгрузка в среду по заявкам понедельника, XL-формат допустим"
+      },
+      {
+        id: 15,
+        type: "transfer",
+        day: 2,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Ступино → Подольск: приём заявок 2",
+        note: "Заявки, созданные в 1С до 18:00 среды, включая заявки вторника"
+      },
+      {
+        id: 16,
+        type: "transfer",
+        day: 4,
+        start: 8 * 60,
+        end: 20 * 60,
+        title: "Ступино → Подольск: отгрузка 2",
+        note: "Отгрузка в пятницу, включая заявки вторника, XL-формат допустим"
+      },
+      {
+        id: 17,
+        type: "transfer",
+        day: 3,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Ступино → Подольск: приём заявок 3",
+        note: "Заявки, созданные в 1С до 18:00 четверга"
+      },
+      {
+        id: 18,
+        type: "transfer",
+        day: 0,
+        start: 8 * 60,
+        end: 20 * 60,
+        title: "Ступино → Подольск: отгрузка 3",
+        note: "Отгрузка в понедельник, XL-формат допустим"
+      }
+    ];
+
+    let events = JSON.parse(JSON.stringify(INITIAL_EVENTS));
+    let selectedId = null;
+    let drag = null;
+
+    const svg = document.getElementById('gantt');
+    const editor = document.getElementById('editor');
+    const emptyState = document.getElementById('emptyState');
+    const selectedBox = document.getElementById('selectedBox');
+    const eventType = document.getElementById('eventType');
+    const eventTitle = document.getElementById('eventTitle');
+    const eventNote = document.getElementById('eventNote');
+    const eventDay = document.getElementById('eventDay');
+    const eventStart = document.getElementById('eventStart');
+    const eventEnd = document.getElementById('eventEnd');
+
+    DAYS.forEach((day, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = day;
+      eventDay.appendChild(opt);
+    });
+
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+    function snapMinutes(mins) { return Math.round(mins / SNAP_MIN) * SNAP_MIN; }
+    function timeLabel(min) {
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+    function timeToMinutes(str) {
+      const [h, m] = str.split(':').map(Number);
+      return h * 60 + m;
+    }
+    function getEventById(id) { return events.find(e => e.id === id) || null; }
+    function nextId() { return Math.max(0, ...events.map(e => e.id)) + 1; }
+
+    function buildPathRightArrow(x, y, w, h) {
+      const tip = 18;
+      const r = 14;
+      const body = Math.max(40, w - tip);
+      const x2 = x + body;
+      const x3 = x + w;
+      const y0 = y;
+      const y1 = y + h;
+      const ym = y + h / 2;
+      return [
+        `M ${x + r} ${y0}`,
+        `L ${x2 - r} ${y0}`,
+        `Q ${x2} ${y0} ${x2} ${y0 + r}`,
+        `L ${x2} ${y0 + 8}`,
+        `L ${x3} ${ym}`,
+        `L ${x2} ${y1 - 8}`,
+        `L ${x2} ${y1 - r}`,
+        `Q ${x2} ${y1} ${x2 - r} ${y1}`,
+        `L ${x + r} ${y1}`,
+        `Q ${x} ${y1} ${x} ${y1 - r}`,
+        `L ${x} ${y0 + r}`,
+        `Q ${x} ${y0} ${x + r} ${y0}`,
+        'Z'
+      ].join(' ');
+    }
+
+    function render() {
+      const totalWidth = LEFT_COL + HOUR_COUNT * HOUR_WIDTH;
+      const totalHeight = HEADER_H + DAYS.length * DAY_HEIGHT;
+      svg.setAttribute('width', totalWidth);
+      svg.setAttribute('height', totalHeight);
+      svg.innerHTML = '';
+
+      const ns = 'http://www.w3.org/2000/svg';
+      const add = (name, attrs, parent = svg) => {
+        const el = document.createElementNS(ns, name);
+        Object.entries(attrs || {}).forEach(([k, v]) => el.setAttribute(k, v));
+        parent.appendChild(el);
+        return el;
+      };
+
+      add('rect', { x: 0, y: 0, width: totalWidth, height: totalHeight, fill: '#fff' });
+
+      for (let i = 0; i <= HOUR_COUNT; i++) {
+        const x = LEFT_COL + i * HOUR_WIDTH;
+        add('line', { x1: x, y1: 0, x2: x, y2: totalHeight, stroke: '#cfd8e3', 'stroke-width': 1 });
+        if (i < HOUR_COUNT) {
+          add('rect', { x, y: 0, width: HOUR_WIDTH, height: HEADER_H, fill: '#f8fafc' });
+          const label = add('text', { x: x + 10, y: 34, fill: '#334155', 'font-size': 14, 'font-weight': 700 });
+          label.textContent = `${String(START_HOUR + i).padStart(2, '0')}:00`;
+          const mid = x + HOUR_WIDTH / 2;
+          add('line', { x1: mid, y1: HEADER_H, x2: mid, y2: totalHeight, stroke: '#e8edf4', 'stroke-width': 1, 'stroke-dasharray': '4 4' });
+        }
+      }
+
+      add('line', { x1: LEFT_COL, y1: 0, x2: LEFT_COL, y2: totalHeight, stroke: '#94a3b8', 'stroke-width': 1.4 });
+      add('line', { x1: 0, y1: HEADER_H, x2: totalWidth, y2: HEADER_H, stroke: '#cfd8e3', 'stroke-width': 1 });
+
+      DAYS.forEach((day, row) => {
+        const y = HEADER_H + row * DAY_HEIGHT;
+        add('rect', { x: 0, y, width: LEFT_COL, height: DAY_HEIGHT, fill: '#f8fafc' });
+        const t = add('text', { x: 16, y: y + 34, fill: '#172033', 'font-size': 16, 'font-weight': 700 });
+        t.textContent = day;
+        add('line', { x1: 0, y1: y, x2: totalWidth, y2: y, stroke: '#cfd8e3', 'stroke-width': 1 });
+        add('line', { x1: 0, y1: y + DAY_HEIGHT / 2, x2: totalWidth, y2: y + DAY_HEIGHT / 2, stroke: '#eef2f7', 'stroke-width': 1 });
+      });
+      add('line', { x1: 0, y1: totalHeight - 1, x2: totalWidth, y2: totalHeight - 1, stroke: '#cfd8e3', 'stroke-width': 1 });
+
+      events.forEach(evt => {
+        const meta = TYPE_META[evt.type];
+        const x = LEFT_COL + (evt.start - START_HOUR * 60) * PX_PER_MIN;
+        const y = HEADER_H + evt.day * DAY_HEIGHT + ROW_TOP_PAD;
+        const w = Math.max(42, (evt.end - evt.start) * PX_PER_MIN);
+        const h = ROW_ITEM_H;
+        const selected = evt.id === selectedId;
+
+        const g = add('g', { 'data-id': evt.id });
+
+        const path = add('path', {
+          d: buildPathRightArrow(x, y, w, h),
+          fill: meta.fill,
+          stroke: selected ? '#172033' : meta.stroke,
+          'stroke-width': selected ? 2.8 : 2,
+          cursor: 'grab'
+        }, g);
+        path.addEventListener('pointerdown', ev => startDrag(ev, evt.id, 'move'));
+
+        const title = add('text', { x: x + 12, y: y + 18, fill: '#172033', 'font-size': 12.5, 'font-weight': 700, 'pointer-events': 'none' }, g);
+        title.textContent = `${meta.emoji} ${evt.title}`;
+
+        const note = add('text', { x: x + 12, y: y + 34, fill: '#334155', 'font-size': 11, 'pointer-events': 'none' }, g);
+        note.textContent = `${timeLabel(evt.start)}–${timeLabel(evt.end)} · ${evt.note}`;
+
+        const leftHandle = add('rect', {
+          x: x - 4, y: y + 10, width: 8, height: 26, rx: 3,
+          fill: '#172033', opacity: 0.85, cursor: 'ew-resize'
+        }, g);
+        leftHandle.addEventListener('pointerdown', ev => startDrag(ev, evt.id, 'resize-left'));
+
+        const rightHandle = add('rect', {
+          x: x + w - 4, y: y + 10, width: 8, height: 26, rx: 3,
+          fill: '#172033', opacity: 0.85, cursor: 'ew-resize'
+        }, g);
+        rightHandle.addEventListener('pointerdown', ev => startDrag(ev, evt.id, 'resize-right'));
+
+        const startMark = add('circle', {
+          cx: x, cy: y + h / 2, r: 5, fill: '#172033', stroke: '#fff', 'stroke-width': 2
+        }, g);
+        startMark.addEventListener('pointerdown', ev => startDrag(ev, evt.id, 'move'));
+
+        g.addEventListener('click', () => {
+          selectedId = evt.id;
+          updateEditor();
+          render();
+        });
+      });
+    }
+
+    function getPointerPos(ev) {
+      const rect = svg.getBoundingClientRect();
+      return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    }
+
+    function startDrag(ev, id, mode) {
+      ev.stopPropagation();
+      const evt = getEventById(id);
+      if (!evt) return;
+      const pos = getPointerPos(ev);
+      selectedId = id;
+      drag = {
+        id,
+        mode,
+        startX: pos.x,
+        startY: pos.y,
+        originalDay: evt.day,
+        originalStart: evt.start,
+        originalEnd: evt.end
+      };
+      updateEditor();
+      render();
+      window.addEventListener('pointermove', onDrag);
+      window.addEventListener('pointerup', stopDrag);
+    }
+
+    function onDrag(ev) {
+      if (!drag) return;
+      const evt = getEventById(drag.id);
+      if (!evt) return;
+      const pos = getPointerPos(ev);
+      const deltaX = pos.x - drag.startX;
+      const deltaY = pos.y - drag.startY;
+      const deltaMin = snapMinutes(deltaX / PX_PER_MIN);
+      const dayShift = Math.round(deltaY / DAY_HEIGHT);
+
+      if (drag.mode === 'move') {
+        const duration = drag.originalEnd - drag.originalStart;
+        evt.start = clamp(drag.originalStart + deltaMin, START_HOUR * 60, END_HOUR * 60 - duration);
+        evt.end = evt.start + duration;
+        evt.day = clamp(drag.originalDay + dayShift, 0, DAYS.length - 1);
+      }
+      if (drag.mode === 'resize-left') {
+        evt.start = clamp(drag.originalStart + deltaMin, START_HOUR * 60, drag.originalEnd - MIN_DURATION);
+      }
+      if (drag.mode === 'resize-right') {
+        evt.end = clamp(drag.originalEnd + deltaMin, drag.originalStart + MIN_DURATION, END_HOUR * 60);
+      }
+      updateEditor();
+      render();
+    }
+
+    function stopDrag() {
+      drag = null;
+      window.removeEventListener('pointermove', onDrag);
+      window.removeEventListener('pointerup', stopDrag);
+    }
+
+    function updateEditor() {
+      const evt = getEventById(selectedId);
+      if (!evt) {
+        editor.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+      editor.style.display = 'block';
+      emptyState.style.display = 'none';
+      selectedBox.className = `selected-box ${evt.type}`;
+      selectedBox.innerHTML = `<strong>${TYPE_META[evt.type].emoji} ${TYPE_META[evt.type].label}</strong><div style="margin-top:6px; font-size:14px;">${DAYS[evt.day]} · ${timeLabel(evt.start)}–${timeLabel(evt.end)}</div>`;
+      eventType.value = evt.type;
+      eventTitle.value = evt.title;
+      eventNote.value = evt.note;
+      eventDay.value = String(evt.day);
+      eventStart.value = timeLabel(evt.start);
+      eventEnd.value = timeLabel(evt.end);
+    }
+
+    function addEvent(type) {
+      const id = nextId();
+      events.push({
+        id,
+        type,
+        day: 0,
+        start: 9 * 60,
+        end: 11 * 60,
+        title: `${TYPE_META[type].label}: новое событие`,
+        note: type === 'transfer' ? 'XL-формат допустим, при необходимости уточни подпись' : 'Измени подпись и время'
+      });
+      selectedId = id;
+      updateEditor();
+      render();
+    }
+
+    function resetAll() {
+      events = JSON.parse(JSON.stringify(INITIAL_EVENTS));
+      selectedId = null;
+      updateEditor();
+      render();
+    }
+
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'warehouse_schedule_events.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    svg.addEventListener('click', (ev) => {
+      if (ev.target === svg) {
+        selectedId = null;
+        updateEditor();
+        render();
+      }
+    });
+
+    document.getElementById('addPickup').addEventListener('click', () => addEvent('pickup'));
+    document.getElementById('addDelivery').addEventListener('click', () => addEvent('delivery'));
+    document.getElementById('addTransfer').addEventListener('click', () => addEvent('transfer'));
+    document.getElementById('resetBtn').addEventListener('click', resetAll);
+    document.getElementById('exportBtn').addEventListener('click', exportJSON);
+    document.getElementById('deleteBtn').addEventListener('click', () => {
+      if (!selectedId) return;
+      events = events.filter(e => e.id !== selectedId);
+      selectedId = null;
+      updateEditor();
+      render();
+    });
+
+    eventType.addEventListener('change', () => {
+      const evt = getEventById(selectedId); if (!evt) return;
+      evt.type = eventType.value; updateEditor(); render();
+    });
+    eventTitle.addEventListener('input', () => {
+      const evt = getEventById(selectedId); if (!evt) return;
+      evt.title = eventTitle.value; render();
+    });
+    eventNote.addEventListener('input', () => {
+      const evt = getEventById(selectedId); if (!evt) return;
+      evt.note = eventNote.value; render();
+    });
+    eventDay.addEventListener('change', () => {
+      const evt = getEventById(selectedId); if (!evt) return;
+      evt.day = Number(eventDay.value); updateEditor(); render();
+    });
+    eventStart.addEventListener('change', () => {
+      const evt = getEventById(selectedId); if (!evt) return;
+      const start = snapMinutes(timeToMinutes(eventStart.value));
+      evt.start = clamp(start, START_HOUR * 60, evt.end - MIN_DURATION);
+      updateEditor(); render();
+    });
+    eventEnd.addEventListener('change', () => {
+      const evt = getEventById(selectedId); if (!evt) return;
+      const end = snapMinutes(timeToMinutes(eventEnd.value));
+      evt.end = clamp(end, evt.start + MIN_DURATION, END_HOUR * 60);
+      updateEditor(); render();
+    });
+
+    updateEditor();
+    render();
+  </script>
+</body>
+</html>
