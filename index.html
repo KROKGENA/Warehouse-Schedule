@@ -3,312 +3,456 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Режим работы склада — интерактивная диаграмма</title>
+  <title>Warehouse Schedule Gantt</title>
   <style>
-    :root {
-      --bg: #f5f7fb;
-      --panel: #ffffff;
-      --line: #d8dee9;
-      --line-soft: #ebeff5;
-      --text: #172033;
-      --muted: #586273;
-      --pickup-bg: #dbeafe;
-      --pickup-br: #60a5fa;
-      --delivery-bg: #dcfce7;
-      --delivery-br: #4ade80;
-      --transfer-bg: #fef3c7;
-      --transfer-br: #f59e0b;
-      --danger: #dc2626;
-      --shadow: 0 10px 24px rgba(16, 24, 40, 0.08);
+    :root{
+      --bg:#f5f7fb;
+      --panel:#ffffff;
+      --line:#d7dee9;
+      --line-soft:#e8edf5;
+      --text:#1f2937;
+      --muted:#667085;
+      --pickup:#dbeafe;
+      --pickup-border:#60a5fa;
+      --delivery:#dcfce7;
+      --delivery-border:#4ade80;
+      --transfer:#fef3c7;
+      --transfer-border:#f59e0b;
+      --selected:#111827;
+      --danger:#dc2626;
+      --radius:16px;
+      --shadow:0 10px 30px rgba(15,23,42,.08);
+      --hour-width:110px;
+      --day-width:170px;
+      --toolbar-h:64px;
+      --header-h:52px;
+      --lane-h:56px;
+      --lane-gap:12px;
+      --label-h:18px;
+      --event-h:18px;
+      --event-top:24px;
     }
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
       font-family: Arial, Helvetica, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      background:var(--bg);
+      color:var(--text);
     }
 
-    .app {
-      max-width: 1700px;
-      margin: 0 auto;
-      padding: 20px;
+    .page{
+      padding:20px;
+      max-width:1800px;
+      margin:0 auto;
     }
 
-    .topbar {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
     }
 
-    .title h1 {
-      margin: 0;
-      font-size: 28px;
-      line-height: 1.15;
+    .title{
+      font-size:28px;
+      font-weight:700;
+      margin-right:auto;
     }
 
-    .title .sub {
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 14px;
+    .chip{
+      background:#eef2f7;
+      color:#334155;
+      border:1px solid #dbe3ee;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
     }
 
-    .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(900px,1fr) 360px;
+      gap:16px;
     }
 
-    button, select, input, textarea {
-      font: inherit;
+    .panel{
+      background:var(--panel);
+      border:1px solid #e5eaf1;
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
 
-    button {
-      border: 1px solid var(--line);
-      background: #fff;
-      border-radius: 12px;
-      padding: 10px 14px;
-      cursor: pointer;
-      color: var(--text);
+    .panel-head{
+      padding:16px 18px;
+      border-bottom:1px solid #e8edf5;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
     }
 
-    button:hover { background: #f8fafc; }
-    button.primary { background: #172033; color: #fff; border-color: #172033; }
-    button.primary:hover { background: #0f172a; }
-    button.danger { color: #fff; background: var(--danger); border-color: var(--danger); }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(900px, 1fr) 360px;
-      gap: 16px;
-      align-items: start;
+    .panel-head h2{
+      margin:0;
+      font-size:18px;
     }
 
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line-soft);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
     }
 
-    .card-head {
-      padding: 16px 18px;
-      border-bottom: 1px solid var(--line-soft);
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
+    button, select, input, textarea{
+      font:inherit;
     }
 
-    .card-head h2 {
-      margin: 0;
-      font-size: 20px;
+    .btn{
+      border:1px solid #d8e0ea;
+      background:#fff;
+      border-radius:12px;
+      padding:10px 14px;
+      cursor:pointer;
+      color:#0f172a;
     }
 
-    .card-body {
-      padding: 16px;
+    .btn:hover{background:#f8fafc}
+    .btn.primary{
+      background:#0f172a;
+      color:#fff;
+      border-color:#0f172a;
+    }
+    .btn.primary:hover{opacity:.95}
+    .btn.danger{
+      background:var(--danger);
+      color:#fff;
+      border-color:var(--danger);
     }
 
-    .canvas-wrap {
-      overflow: auto;
-      border: 1px solid var(--line-soft);
-      border-radius: 18px;
-      background: #fff;
+    .board-wrap{
+      padding:14px;
+      overflow:auto;
+      background:#fff;
     }
 
-    svg { display: block; }
-
-    .form {
-      display: grid;
-      gap: 12px;
+    .board{
+      position:relative;
+      min-width:calc(var(--day-width) + 12 * var(--hour-width));
+      user-select:none;
     }
 
-    .field {
-      display: grid;
-      gap: 6px;
+    .time-header{
+      display:grid;
+      grid-template-columns:var(--day-width) repeat(12, var(--hour-width));
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:#fff;
     }
 
-    .field label {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 700;
+    .time-cell{
+      height:var(--header-h);
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      border-right:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      padding:0 10px;
+      font-weight:700;
+      color:#334155;
+      background:#f8fafc;
     }
 
-    .field input, .field select, .field textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 10px 12px;
-      background: #fff;
+    .time-cell:first-child{
+      border-left:1px solid var(--line);
+      background:#f8fafc;
     }
 
-    .field textarea {
-      resize: vertical;
-      min-height: 78px;
+    .day-row{
+      display:grid;
+      grid-template-columns:var(--day-width) 1fr;
+      border-left:1px solid var(--line);
+      border-right:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      background:#fff;
     }
 
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .day-label{
+      padding:18px 14px;
+      font-size:18px;
+      font-weight:700;
+      background:#f8fafc;
+      border-right:1px solid var(--line);
+      display:flex;
+      align-items:flex-start;
     }
 
-    .selected-box {
-      border-radius: 16px;
-      padding: 12px 14px;
-      border: 2px solid var(--line);
-      background: #fff;
+    .day-grid{
+      position:relative;
+      min-height:120px;
+      background:
+        repeating-linear-gradient(
+          to right,
+          transparent 0,
+          transparent calc(var(--hour-width)/2 - 1px),
+          var(--line-soft) calc(var(--hour-width)/2 - 1px),
+          var(--line-soft) calc(var(--hour-width)/2 + 1px),
+          transparent calc(var(--hour-width)/2 + 1px),
+          transparent var(--hour-width)
+        ),
+        repeating-linear-gradient(
+          to right,
+          var(--line) 0,
+          var(--line) 1px,
+          transparent 1px,
+          transparent var(--hour-width)
+        );
     }
 
-    .selected-box.pickup { background: var(--pickup-bg); border-color: var(--pickup-br); }
-    .selected-box.delivery { background: var(--delivery-bg); border-color: var(--delivery-br); }
-    .selected-box.transfer { background: var(--transfer-bg); border-color: var(--transfer-br); }
-
-    .tip {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
+    .lane{
+      position:relative;
+      height:calc(var(--lane-h) + var(--lane-gap));
+      border-bottom:1px dashed #eef2f7;
     }
 
-    .legend {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+    .lane:last-child{
+      border-bottom:none;
     }
 
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 13px;
-      border: 1px solid var(--line);
-      background: #fff;
+    .event{
+      position:absolute;
+      height:var(--event-h);
+      top:var(--event-top);
+      border-radius:999px;
+      border:2px solid transparent;
+      cursor:grab;
+      z-index:5;
     }
 
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
+    .event.selected{
+      outline:2px solid var(--selected);
+      outline-offset:1px;
+      z-index:9;
     }
 
-    @media (max-width: 1280px) {
-      .layout { grid-template-columns: 1fr; }
+    .event.pickup{
+      background:var(--pickup);
+      border-color:var(--pickup-border);
+    }
+
+    .event.delivery{
+      background:var(--delivery);
+      border-color:var(--delivery-border);
+    }
+
+    .event.transfer{
+      background:var(--transfer);
+      border-color:var(--transfer-border);
+    }
+
+    .event-body{
+      position:absolute;
+      inset:0 14px 0 14px;
+      border-radius:999px;
+    }
+
+    .event-arrow{
+      position:absolute;
+      right:-2px;
+      top:50%;
+      transform:translateY(-50%);
+      width:0;
+      height:0;
+      border-top:11px solid transparent;
+      border-bottom:11px solid transparent;
+      border-left:16px solid currentColor;
+      filter:drop-shadow(0 0 0 rgba(0,0,0,0));
+    }
+
+    .event.pickup .event-arrow{color:var(--pickup-border)}
+    .event.delivery .event-arrow{color:var(--delivery-border)}
+    .event.transfer .event-arrow{color:var(--transfer-border)}
+
+    .handle{
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      width:12px;
+      height:24px;
+      border-radius:10px;
+      background:#111827;
+      cursor:ew-resize;
+      z-index:10;
+    }
+
+    .handle.left{left:-6px}
+    .handle.right{right:-6px}
+
+    .event-label{
+      position:absolute;
+      top:2px;
+      left:0;
+      font-size:13px;
+      line-height:1;
+      font-weight:700;
+      color:#0f172a;
+      white-space:nowrap;
+      pointer-events:none;
+      background:rgba(255,255,255,.92);
+      padding:1px 6px;
+      border-radius:8px;
+      border:1px solid rgba(203,213,225,.7);
+    }
+
+    .event-time{
+      position:absolute;
+      top:44px;
+      left:0;
+      font-size:12px;
+      color:#475467;
+      white-space:nowrap;
+      pointer-events:none;
+      background:rgba(255,255,255,.92);
+      padding:1px 6px;
+      border-radius:8px;
+      border:1px solid rgba(203,213,225,.7);
+    }
+
+    .sidebar{
+      padding:16px;
+    }
+
+    .summary-card{
+      border-radius:18px;
+      padding:14px;
+      margin-bottom:14px;
+      border:2px solid transparent;
+    }
+
+    .summary-card.pickup{
+      background:var(--pickup);
+      border-color:var(--pickup-border);
+    }
+    .summary-card.delivery{
+      background:var(--delivery);
+      border-color:var(--delivery-border);
+    }
+    .summary-card.transfer{
+      background:var(--transfer);
+      border-color:var(--transfer-border);
+    }
+
+    .summary-title{
+      font-weight:700;
+      margin-bottom:8px;
+      font-size:14px;
+    }
+
+    .field{
+      margin-bottom:12px;
+    }
+
+    .field label{
+      display:block;
+      font-size:13px;
+      font-weight:700;
+      color:#475467;
+      margin-bottom:6px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea{
+      width:100%;
+      border:1px solid #cfd8e3;
+      border-radius:12px;
+      padding:11px 12px;
+      background:#fff;
+    }
+
+    .field textarea{
+      min-height:82px;
+      resize:vertical;
+    }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .hint{
+      color:#667085;
+      font-size:13px;
+      line-height:1.45;
+    }
+
+    .footer-note{
+      margin-top:10px;
+      padding:12px;
+      border:1px dashed #d8e0ea;
+      background:#fafcff;
+      border-radius:14px;
+      font-size:13px;
+      color:#475467;
+    }
+
+    @media (max-width: 1200px){
+      .layout{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
-  <div class="app">
+  <div class="page">
     <div class="topbar">
-      <div class="title">
-        <h1>Интерактивная диаграмма режима работы склада</h1>
-        <div class="sub">Ось X: 08:00–20:00 с шагом 1 час. Ось Y: дни недели. События можно переносить и растягивать.</div>
-      </div>
-      <div class="actions">
-        <button id="addPickup">+ Самовывоз</button>
-        <button id="addDelivery">+ Доставка</button>
-        <button id="addTransfer">+ Перемещение</button>
-        <button id="resetBtn">Сброс</button>
-        <button id="exportBtn" class="primary">Экспорт JSON</button>
-      </div>
-    </div>
-
-    <div class="legend" style="margin-bottom:16px;">
-      <div class="pill"><span class="dot" style="background:#60a5fa"></span> Самовывоз</div>
-      <div class="pill"><span class="dot" style="background:#4ade80"></span> Доставка</div>
-      <div class="pill"><span class="dot" style="background:#f59e0b"></span> Перемещение</div>
-      <div class="pill">✳ XL-формат допустим в каждой машине перемещения</div>
+      <div class="title">Интерактивная диаграмма режима работы склада</div>
+      <div class="chip">08:00–20:00</div>
+      <div class="chip">Дни недели по оси Y</div>
+      <div class="chip">Перетаскивание по времени, дню и дорожке</div>
     </div>
 
     <div class="layout">
-      <div class="card">
-        <div class="card-head">
+      <div class="panel">
+        <div class="panel-head">
           <h2>Поле моделирования</h2>
-        </div>
-        <div class="card-body">
-          <div class="canvas-wrap">
-            <svg id="gantt"></svg>
+          <div class="toolbar">
+            <button class="btn" id="addPickup">+ Самовывоз</button>
+            <button class="btn" id="addDelivery">+ Доставка</button>
+            <button class="btn" id="addTransfer">+ Перемещение</button>
+            <button class="btn" id="resetBtn">Сброс</button>
+            <button class="btn primary" id="exportBtn">Экспорт JSON</button>
           </div>
+        </div>
+        <div class="board-wrap">
+          <div class="board" id="board"></div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-head">
+      <div class="panel">
+        <div class="panel-head">
           <h2>Свойства события</h2>
         </div>
-        <div class="card-body">
-          <div id="emptyState" class="tip">Выбери событие на диаграмме. Его можно перетаскивать по времени и между днями, а также растягивать стрелку за левую и правую ручку.</div>
-
-          <div id="editor" style="display:none;">
-            <div id="selectedBox" class="selected-box"></div>
-            <div class="form" style="margin-top:12px;">
-              <div class="field">
-                <label for="eventType">Тип</label>
-                <select id="eventType">
-                  <option value="pickup">Самовывоз</option>
-                  <option value="delivery">Доставка</option>
-                  <option value="transfer">Перемещение</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="eventTitle">Название</label>
-                <input id="eventTitle" />
-              </div>
-              <div class="field">
-                <label for="eventNote">Пояснение</label>
-                <textarea id="eventNote"></textarea>
-              </div>
-              <div class="field">
-                <label for="eventDay">День недели</label>
-                <select id="eventDay"></select>
-              </div>
-              <div class="grid2">
-                <div class="field">
-                  <label for="eventStart">Начало</label>
-                  <input id="eventStart" type="time" step="900" min="08:00" max="20:00" />
-                </div>
-                <div class="field">
-                  <label for="eventEnd">Окончание</label>
-                  <input id="eventEnd" type="time" step="900" min="08:00" max="20:00" />
-                </div>
-              </div>
-              <button id="deleteBtn" class="danger">Удалить событие</button>
-            </div>
-          </div>
-        </div>
+        <div class="sidebar" id="sidebar"></div>
       </div>
     </div>
   </div>
 
   <script>
-    const DAYS = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"];
-    const DAY_INDEX = { "Понедельник": 0, "Вторник": 1, "Среда": 2, "Четверг": 3, "Пятница": 4 };
+    const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница"];
     const START_HOUR = 8;
     const END_HOUR = 20;
-    const HOUR_COUNT = END_HOUR - START_HOUR;
-    const HOUR_WIDTH = 96;
-    const DAY_HEIGHT = 96;
-    const HEADER_H = 58;
-    const LEFT_COL = 170;
-    const ROW_TOP_PAD = 18;
-    const ROW_ITEM_H = 46;
-    const PX_PER_MIN = HOUR_WIDTH / 60;
+    const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60; // 720
+    const HOUR_WIDTH = 110;
+    const DAY_WIDTH = 170;
+    const SNAP_MINUTES = 15;
     const MIN_DURATION = 30;
-    const SNAP_MIN = 15;
 
     const TYPE_META = {
-      pickup: { label: "Самовывоз", emoji: "🚚", fill: "#dbeafe", stroke: "#60a5fa" },
-      delivery: { label: "Доставка", emoji: "📦", fill: "#dcfce7", stroke: "#4ade80" },
-      transfer: { label: "Перемещение", emoji: "🔁", fill: "#fef3c7", stroke: "#f59e0b" }
+      pickup: { label: "Самовывоз", icon: "🚚" },
+      delivery: { label: "Доставка", icon: "📦" },
+      transfer: { label: "Перемещение", icon: "🔁" }
     };
 
     const INITIAL_EVENTS = [
@@ -316,483 +460,610 @@
         id: 1,
         type: "pickup",
         day: 0,
+        lane: 0,
         start: 8 * 60,
         end: 12 * 60,
-        title: "Самовывоз: заявки до 12:00",
-        note: "Реализации, созданные в 1С до 12:00 текущего дня, собираем и отгружаем в этот же день"
+        title: "Самовывоз: приём заявок",
+        note: "Реализации, созданные в 1С до 12:00 текущего дня, собираем и отгружаем в этот же день."
       },
       {
         id: 2,
         type: "pickup",
         day: 0,
+        lane: 1,
         start: 12 * 60,
         end: 20 * 60,
-        title: "Самовывоз: отгрузка день в день",
-        note: "Заезд на территорию до 19:00, отгрузка до 20:00"
+        title: "Самовывоз: отгрузка следующего рабочего дня",
+        note: "Заявки после 12:00 текущего дня отгружаются на следующий рабочий день в интервале 09:00–20:00. Заезд на территорию до 19:00."
       },
       {
         id: 3,
-        type: "pickup",
-        day: 1,
-        start: 9 * 60,
-        end: 20 * 60,
-        title: "Самовывоз: заявки после 12:00 предыдущего дня",
-        note: "Заявки на самовывоз, созданные после 12:00 текущего дня, отгружаются на следующий рабочий день"
+        type: "delivery",
+        day: 0,
+        lane: 0,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Доставка: приём заявок",
+        note: "Реализации, созданные в 1С до 18:00 текущего дня, отгружаются и доставляются через один рабочий день. Выходные не считаем."
       },
       {
         id: 4,
-        type: "pickup",
-        day: 1,
-        start: 9 * 60,
-        end: 19 * 60,
-        title: "Самовывоз: заезд на следующий рабочий день",
-        note: "Интервал отгрузки 09:00–20:00, заезд на территорию до 19:00"
+        type: "transfer",
+        day: 0,
+        lane: 2,
+        start: 8 * 60,
+        end: 17 * 60,
+        title: "Ступино → СПБ: приём заявок",
+        note: "Заявки до 17:00 понедельника."
       },
       {
         id: 5,
-        type: "delivery",
-        day: 0,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Доставка: заявки до 18:00",
-        note: "Реализации, созданные в 1С до 18:00 текущего дня, отгружаются и доставляются через один рабочий день"
+        type: "transfer",
+        day: 1,
+        lane: 0,
+        start: 14 * 60,
+        end: 20 * 60,
+        title: "Ступино → СПБ: отгрузка",
+        note: "Отгрузка во вторник с 14:00. Перемещение один раз в неделю. XL-формат допустим."
       },
       {
         id: 6,
-        type: "delivery",
-        day: 3,
+        type: "transfer",
+        day: 0,
+        lane: 3,
         start: 8 * 60,
         end: 18 * 60,
-        title: "Пример доставки: четверг → понедельник",
-        note: "Заявка поступила в четверг до 18:00 — доставка в понедельник"
+        title: "Ступино → Шереметьево: приём заявок",
+        note: "Заявки до 18:00 понедельника."
       },
       {
         id: 7,
-        type: "delivery",
-        day: 4,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Пример доставки: пятница → вторник",
-        note: "Заявка поступила в пятницу до 18:00 — доставка во вторник"
+        type: "transfer",
+        day: 2,
+        lane: 0,
+        start: 9 * 60,
+        end: 16 * 60,
+        title: "Ступино → Шереметьево: отгрузка",
+        note: "Отгрузка в среду. Перемещение один раз в неделю. XL-формат допустим."
       },
       {
         id: 8,
-        type: "delivery",
-        day: 2,
+        type: "transfer",
+        day: 0,
+        lane: 4,
         start: 8 * 60,
         end: 18 * 60,
-        title: "Пример доставки: среда → пятница",
-        note: "Заявка поступила в среду до 18:00 — доставка в пятницу"
+        title: "Ступино → Подольск: приём заявок 1",
+        note: "Заявки до 18:00 понедельника."
       },
       {
         id: 9,
         type: "transfer",
-        day: 0,
-        start: 8 * 60,
-        end: 17 * 60,
-        title: "Ступино → СПБ: приём заявок",
-        note: "Перемещения, созданные в 1С до 17:00 понедельника"
+        day: 2,
+        lane: 1,
+        start: 9 * 60,
+        end: 16 * 60,
+        title: "Ступино → Подольск: отгрузка 1",
+        note: "Заявки, созданные до 18:00 понедельника, отгружаются в среду. XL-формат допустим."
       },
       {
         id: 10,
         type: "transfer",
-        day: 1,
-        start: 14 * 60,
-        end: 20 * 60,
-        title: "Ступино → СПБ: отгрузка",
-        note: "Отгрузка во вторник с 14:00, перемещение один раз в неделю, XL-формат допустим"
+        day: 2,
+        lane: 2,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Ступино → Подольск: приём заявок 2",
+        note: "Заявки до 18:00 среды, включая заявки вторника."
       },
       {
         id: 11,
         type: "transfer",
-        day: 0,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Ступино → Шереметьево: приём заявок",
-        note: "Заявки, созданные в 1С до 18:00 понедельника"
+        day: 4,
+        lane: 0,
+        start: 9 * 60,
+        end: 16 * 60,
+        title: "Ступино → Подольск: отгрузка 2",
+        note: "Заявки, созданные до 18:00 среды, отгружаются в пятницу, включая заявки вторника. XL-формат допустим."
       },
       {
         id: 12,
         type: "transfer",
-        day: 2,
+        day: 3,
+        lane: 0,
         start: 8 * 60,
-        end: 20 * 60,
-        title: "Ступино → Шереметьево: отгрузка",
-        note: "Отгрузка в среду, перемещение один раз в неделю, XL-формат допустим"
+        end: 18 * 60,
+        title: "Ступино → Подольск: приём заявок 3",
+        note: "Заявки до 18:00 четверга."
       },
       {
         id: 13,
         type: "transfer",
         day: 0,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Ступино → Подольск: приём заявок 1",
-        note: "Заявки, созданные в 1С до 18:00 понедельника"
-      },
-      {
-        id: 14,
-        type: "transfer",
-        day: 2,
-        start: 8 * 60,
-        end: 20 * 60,
-        title: "Ступино → Подольск: отгрузка 1",
-        note: "Отгрузка в среду по заявкам понедельника, XL-формат допустим"
-      },
-      {
-        id: 15,
-        type: "transfer",
-        day: 2,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Ступино → Подольск: приём заявок 2",
-        note: "Заявки, созданные в 1С до 18:00 среды, включая заявки вторника"
-      },
-      {
-        id: 16,
-        type: "transfer",
-        day: 4,
-        start: 8 * 60,
-        end: 20 * 60,
-        title: "Ступино → Подольск: отгрузка 2",
-        note: "Отгрузка в пятницу, включая заявки вторника, XL-формат допустим"
-      },
-      {
-        id: 17,
-        type: "transfer",
-        day: 3,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Ступино → Подольск: приём заявок 3",
-        note: "Заявки, созданные в 1С до 18:00 четверга"
-      },
-      {
-        id: 18,
-        type: "transfer",
-        day: 0,
+        lane: 5,
         start: 8 * 60,
         end: 20 * 60,
         title: "Ступино → Подольск: отгрузка 3",
-        note: "Отгрузка в понедельник, XL-формат допустим"
+        note: "Заявки, созданные до 18:00 четверга, отгружаются в понедельник. XL-формат допустим."
       }
     ];
 
-    let events = JSON.parse(JSON.stringify(INITIAL_EVENTS));
-    let selectedId = null;
-    let drag = null;
+    let events = structuredClone(INITIAL_EVENTS);
+    let selectedId = events[0]?.id || null;
+    let dragState = null;
 
-    const svg = document.getElementById('gantt');
-    const editor = document.getElementById('editor');
-    const emptyState = document.getElementById('emptyState');
-    const selectedBox = document.getElementById('selectedBox');
-    const eventType = document.getElementById('eventType');
-    const eventTitle = document.getElementById('eventTitle');
-    const eventNote = document.getElementById('eventNote');
-    const eventDay = document.getElementById('eventDay');
-    const eventStart = document.getElementById('eventStart');
-    const eventEnd = document.getElementById('eventEnd');
+    const board = document.getElementById("board");
+    const sidebar = document.getElementById("sidebar");
+    const addPickupBtn = document.getElementById("addPickup");
+    const addDeliveryBtn = document.getElementById("addDelivery");
+    const addTransferBtn = document.getElementById("addTransfer");
+    const resetBtn = document.getElementById("resetBtn");
+    const exportBtn = document.getElementById("exportBtn");
 
-    DAYS.forEach((day, i) => {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = day;
-      eventDay.appendChild(opt);
-    });
-
-    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-    function snapMinutes(mins) { return Math.round(mins / SNAP_MIN) * SNAP_MIN; }
-    function timeLabel(min) {
-      const h = Math.floor(min / 60);
-      const m = min % 60;
-      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-    }
-    function timeToMinutes(str) {
-      const [h, m] = str.split(':').map(Number);
-      return h * 60 + m;
-    }
-    function getEventById(id) { return events.find(e => e.id === id) || null; }
-    function nextId() { return Math.max(0, ...events.map(e => e.id)) + 1; }
-
-    function buildPathRightArrow(x, y, w, h) {
-      const tip = 18;
-      const r = 14;
-      const body = Math.max(40, w - tip);
-      const x2 = x + body;
-      const x3 = x + w;
-      const y0 = y;
-      const y1 = y + h;
-      const ym = y + h / 2;
-      return [
-        `M ${x + r} ${y0}`,
-        `L ${x2 - r} ${y0}`,
-        `Q ${x2} ${y0} ${x2} ${y0 + r}`,
-        `L ${x2} ${y0 + 8}`,
-        `L ${x3} ${ym}`,
-        `L ${x2} ${y1 - 8}`,
-        `L ${x2} ${y1 - r}`,
-        `Q ${x2} ${y1} ${x2 - r} ${y1}`,
-        `L ${x + r} ${y1}`,
-        `Q ${x} ${y1} ${x} ${y1 - r}`,
-        `L ${x} ${y0 + r}`,
-        `Q ${x} ${y0} ${x + r} ${y0}`,
-        'Z'
-      ].join(' ');
+    function snapMinutes(minutes){
+      return Math.round(minutes / SNAP_MINUTES) * SNAP_MINUTES;
     }
 
-    function render() {
-      const totalWidth = LEFT_COL + HOUR_COUNT * HOUR_WIDTH;
-      const totalHeight = HEADER_H + DAYS.length * DAY_HEIGHT;
-      svg.setAttribute('width', totalWidth);
-      svg.setAttribute('height', totalHeight);
-      svg.innerHTML = '';
-
-      const ns = 'http://www.w3.org/2000/svg';
-      const add = (name, attrs, parent = svg) => {
-        const el = document.createElementNS(ns, name);
-        Object.entries(attrs || {}).forEach(([k, v]) => el.setAttribute(k, v));
-        parent.appendChild(el);
-        return el;
-      };
-
-      add('rect', { x: 0, y: 0, width: totalWidth, height: totalHeight, fill: '#fff' });
-
-      for (let i = 0; i <= HOUR_COUNT; i++) {
-        const x = LEFT_COL + i * HOUR_WIDTH;
-        add('line', { x1: x, y1: 0, x2: x, y2: totalHeight, stroke: '#cfd8e3', 'stroke-width': 1 });
-        if (i < HOUR_COUNT) {
-          add('rect', { x, y: 0, width: HOUR_WIDTH, height: HEADER_H, fill: '#f8fafc' });
-          const label = add('text', { x: x + 10, y: 34, fill: '#334155', 'font-size': 14, 'font-weight': 700 });
-          label.textContent = `${String(START_HOUR + i).padStart(2, '0')}:00`;
-          const mid = x + HOUR_WIDTH / 2;
-          add('line', { x1: mid, y1: HEADER_H, x2: mid, y2: totalHeight, stroke: '#e8edf4', 'stroke-width': 1, 'stroke-dasharray': '4 4' });
-        }
-      }
-
-      add('line', { x1: LEFT_COL, y1: 0, x2: LEFT_COL, y2: totalHeight, stroke: '#94a3b8', 'stroke-width': 1.4 });
-      add('line', { x1: 0, y1: HEADER_H, x2: totalWidth, y2: HEADER_H, stroke: '#cfd8e3', 'stroke-width': 1 });
-
-      DAYS.forEach((day, row) => {
-        const y = HEADER_H + row * DAY_HEIGHT;
-        add('rect', { x: 0, y, width: LEFT_COL, height: DAY_HEIGHT, fill: '#f8fafc' });
-        const t = add('text', { x: 16, y: y + 34, fill: '#172033', 'font-size': 16, 'font-weight': 700 });
-        t.textContent = day;
-        add('line', { x1: 0, y1: y, x2: totalWidth, y2: y, stroke: '#cfd8e3', 'stroke-width': 1 });
-        add('line', { x1: 0, y1: y + DAY_HEIGHT / 2, x2: totalWidth, y2: y + DAY_HEIGHT / 2, stroke: '#eef2f7', 'stroke-width': 1 });
-      });
-      add('line', { x1: 0, y1: totalHeight - 1, x2: totalWidth, y2: totalHeight - 1, stroke: '#cfd8e3', 'stroke-width': 1 });
-
-      events.forEach(evt => {
-        const meta = TYPE_META[evt.type];
-        const x = LEFT_COL + (evt.start - START_HOUR * 60) * PX_PER_MIN;
-        const y = HEADER_H + evt.day * DAY_HEIGHT + ROW_TOP_PAD;
-        const w = Math.max(42, (evt.end - evt.start) * PX_PER_MIN);
-        const h = ROW_ITEM_H;
-        const selected = evt.id === selectedId;
-
-        const g = add('g', { 'data-id': evt.id });
-
-        const path = add('path', {
-          d: buildPathRightArrow(x, y, w, h),
-          fill: meta.fill,
-          stroke: selected ? '#172033' : meta.stroke,
-          'stroke-width': selected ? 2.8 : 2,
-          cursor: 'grab'
-        }, g);
-        path.addEventListener('pointerdown', ev => startDrag(ev, evt.id, 'move'));
-
-        const title = add('text', { x: x + 12, y: y + 18, fill: '#172033', 'font-size': 12.5, 'font-weight': 700, 'pointer-events': 'none' }, g);
-        title.textContent = `${meta.emoji} ${evt.title}`;
-
-        const note = add('text', { x: x + 12, y: y + 34, fill: '#334155', 'font-size': 11, 'pointer-events': 'none' }, g);
-        note.textContent = `${timeLabel(evt.start)}–${timeLabel(evt.end)} · ${evt.note}`;
-
-        const leftHandle = add('rect', {
-          x: x - 4, y: y + 10, width: 8, height: 26, rx: 3,
-          fill: '#172033', opacity: 0.85, cursor: 'ew-resize'
-        }, g);
-        leftHandle.addEventListener('pointerdown', ev => startDrag(ev, evt.id, 'resize-left'));
-
-        const rightHandle = add('rect', {
-          x: x + w - 4, y: y + 10, width: 8, height: 26, rx: 3,
-          fill: '#172033', opacity: 0.85, cursor: 'ew-resize'
-        }, g);
-        rightHandle.addEventListener('pointerdown', ev => startDrag(ev, evt.id, 'resize-right'));
-
-        const startMark = add('circle', {
-          cx: x, cy: y + h / 2, r: 5, fill: '#172033', stroke: '#fff', 'stroke-width': 2
-        }, g);
-        startMark.addEventListener('pointerdown', ev => startDrag(ev, evt.id, 'move'));
-
-        g.addEventListener('click', () => {
-          selectedId = evt.id;
-          updateEditor();
-          render();
-        });
-      });
+    function clamp(val, min, max){
+      return Math.max(min, Math.min(max, val));
     }
 
-    function getPointerPos(ev) {
-      const rect = svg.getBoundingClientRect();
-      return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    function formatTime(minutes){
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
     }
 
-    function startDrag(ev, id, mode) {
-      ev.stopPropagation();
-      const evt = getEventById(id);
-      if (!evt) return;
-      const pos = getPointerPos(ev);
+    function minutesToX(minutes){
+      return ((minutes - START_HOUR * 60) / 60) * HOUR_WIDTH;
+    }
+
+    function xToMinutes(px){
+      return START_HOUR * 60 + (px / HOUR_WIDTH) * 60;
+    }
+
+    function getDayEvents(dayIndex){
+      return events.filter(e => e.day === dayIndex);
+    }
+
+    function getLaneCount(dayIndex){
+      const dayEvents = getDayEvents(dayIndex);
+      const maxLane = dayEvents.length ? Math.max(...dayEvents.map(e => e.lane)) : 0;
+      return Math.max(maxLane + 1, 2);
+    }
+
+    function getEventById(id){
+      return events.find(e => e.id === id);
+    }
+
+    function selectEvent(id){
       selectedId = id;
-      drag = {
-        id,
-        mode,
-        startX: pos.x,
-        startY: pos.y,
-        originalDay: evt.day,
-        originalStart: evt.start,
-        originalEnd: evt.end
-      };
-      updateEditor();
-      render();
-      window.addEventListener('pointermove', onDrag);
-      window.addEventListener('pointerup', stopDrag);
-    }
-
-    function onDrag(ev) {
-      if (!drag) return;
-      const evt = getEventById(drag.id);
-      if (!evt) return;
-      const pos = getPointerPos(ev);
-      const deltaX = pos.x - drag.startX;
-      const deltaY = pos.y - drag.startY;
-      const deltaMin = snapMinutes(deltaX / PX_PER_MIN);
-      const dayShift = Math.round(deltaY / DAY_HEIGHT);
-
-      if (drag.mode === 'move') {
-        const duration = drag.originalEnd - drag.originalStart;
-        evt.start = clamp(drag.originalStart + deltaMin, START_HOUR * 60, END_HOUR * 60 - duration);
-        evt.end = evt.start + duration;
-        evt.day = clamp(drag.originalDay + dayShift, 0, DAYS.length - 1);
-      }
-      if (drag.mode === 'resize-left') {
-        evt.start = clamp(drag.originalStart + deltaMin, START_HOUR * 60, drag.originalEnd - MIN_DURATION);
-      }
-      if (drag.mode === 'resize-right') {
-        evt.end = clamp(drag.originalEnd + deltaMin, drag.originalStart + MIN_DURATION, END_HOUR * 60);
-      }
-      updateEditor();
       render();
     }
 
-    function stopDrag() {
-      drag = null;
-      window.removeEventListener('pointermove', onDrag);
-      window.removeEventListener('pointerup', stopDrag);
-    }
-
-    function updateEditor() {
-      const evt = getEventById(selectedId);
-      if (!evt) {
-        editor.style.display = 'none';
-        emptyState.style.display = 'block';
-        return;
-      }
-      editor.style.display = 'block';
-      emptyState.style.display = 'none';
-      selectedBox.className = `selected-box ${evt.type}`;
-      selectedBox.innerHTML = `<strong>${TYPE_META[evt.type].emoji} ${TYPE_META[evt.type].label}</strong><div style="margin-top:6px; font-size:14px;">${DAYS[evt.day]} · ${timeLabel(evt.start)}–${timeLabel(evt.end)}</div>`;
-      eventType.value = evt.type;
-      eventTitle.value = evt.title;
-      eventNote.value = evt.note;
-      eventDay.value = String(evt.day);
-      eventStart.value = timeLabel(evt.start);
-      eventEnd.value = timeLabel(evt.end);
-    }
-
-    function addEvent(type) {
-      const id = nextId();
-      events.push({
-        id,
-        type,
-        day: 0,
-        start: 9 * 60,
-        end: 11 * 60,
-        title: `${TYPE_META[type].label}: новое событие`,
-        note: type === 'transfer' ? 'XL-формат допустим, при необходимости уточни подпись' : 'Измени подпись и время'
-      });
-      selectedId = id;
-      updateEditor();
+    function setEvents(next){
+      events = next;
       render();
     }
 
-    function resetAll() {
-      events = JSON.parse(JSON.stringify(INITIAL_EVENTS));
-      selectedId = null;
-      updateEditor();
-      render();
-    }
-
-    function exportJSON() {
-      const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json;charset=utf-8' });
+    function exportJSON(){
+      const blob = new Blob([JSON.stringify(events, null, 2)], { type: "application/json;charset=utf-8" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'warehouse_schedule_events.json';
-      document.body.appendChild(a);
+      a.download = "warehouse-gantt-data.json";
       a.click();
-      a.remove();
       URL.revokeObjectURL(url);
     }
 
-    svg.addEventListener('click', (ev) => {
-      if (ev.target === svg) {
-        selectedId = null;
-        updateEditor();
-        render();
-      }
-    });
+    function normalizeLanes(){
+      for(let day = 0; day < DAYS.length; day++){
+        const dayEvents = events
+          .filter(e => e.day === day)
+          .sort((a,b) => a.lane - b.lane || a.start - b.start);
 
-    document.getElementById('addPickup').addEventListener('click', () => addEvent('pickup'));
-    document.getElementById('addDelivery').addEventListener('click', () => addEvent('delivery'));
-    document.getElementById('addTransfer').addEventListener('click', () => addEvent('transfer'));
-    document.getElementById('resetBtn').addEventListener('click', resetAll);
-    document.getElementById('exportBtn').addEventListener('click', exportJSON);
-    document.getElementById('deleteBtn').addEventListener('click', () => {
-      if (!selectedId) return;
-      events = events.filter(e => e.id !== selectedId);
-      selectedId = null;
-      updateEditor();
+        const used = [];
+        for(const ev of dayEvents){
+          let lane = 0;
+          while(true){
+            const conflict = dayEvents.some(other =>
+              other.id !== ev.id &&
+              used.includes(other.id) &&
+              other.lane === lane &&
+              !(ev.end <= other.start || ev.start >= other.end)
+            );
+            if(!conflict) break;
+            lane++;
+          }
+          ev.lane = lane;
+          used.push(ev.id);
+        }
+      }
+    }
+
+    function createEvent(type){
+      const nextId = events.length ? Math.max(...events.map(e => e.id)) + 1 : 1;
+      const ev = {
+        id: nextId,
+        type,
+        day: 0,
+        lane: 0,
+        start: 9 * 60,
+        end: 11 * 60,
+        title: TYPE_META[type].label + ": новое событие",
+        note: type === "transfer"
+          ? "XL-формат допустим, при необходимости уточни подпись."
+          : "Измени подпись и время."
+      };
+      events.push(ev);
+      normalizeLanes();
+      selectedId = nextId;
+      render();
+    }
+
+    function render(){
+      renderBoard();
+      renderSidebar();
+    }
+
+    function renderBoard(){
+      board.innerHTML = "";
+
+      const header = document.createElement("div");
+      header.className = "time-header";
+
+      const leftTop = document.createElement("div");
+      leftTop.className = "time-cell";
+      leftTop.textContent = "";
+      header.appendChild(leftTop);
+
+      for(let h = START_HOUR; h < END_HOUR; h++){
+        const cell = document.createElement("div");
+        cell.className = "time-cell";
+        cell.textContent = String(h).padStart(2,"0") + ":00";
+        header.appendChild(cell);
+      }
+
+      board.appendChild(header);
+
+      for(let dayIndex = 0; dayIndex < DAYS.length; dayIndex++){
+        const row = document.createElement("div");
+        row.className = "day-row";
+
+        const label = document.createElement("div");
+        label.className = "day-label";
+        label.textContent = DAYS[dayIndex];
+        row.appendChild(label);
+
+        const grid = document.createElement("div");
+        grid.className = "day-grid";
+        grid.dataset.day = dayIndex;
+
+        const laneCount = getLaneCount(dayIndex);
+        grid.style.height = (laneCount * (56 + 12)) + "px";
+
+        for(let lane = 0; lane < laneCount; lane++){
+          const laneEl = document.createElement("div");
+          laneEl.className = "lane";
+          laneEl.dataset.day = dayIndex;
+          laneEl.dataset.lane = lane;
+          grid.appendChild(laneEl);
+        }
+
+        const dayEvents = getDayEvents(dayIndex);
+        dayEvents.forEach(ev => {
+          const eventEl = document.createElement("div");
+          eventEl.className = "event " + ev.type + (ev.id === selectedId ? " selected" : "");
+          eventEl.dataset.id = ev.id;
+
+          const width = Math.max(minutesToX(ev.end) - minutesToX(ev.start), 40);
+          const left = minutesToX(ev.start);
+          const top = ev.lane * (56 + 12) + 24;
+
+          eventEl.style.left = left + "px";
+          eventEl.style.top = top + "px";
+          eventEl.style.width = width + "px";
+
+          const labelEl = document.createElement("div");
+          labelEl.className = "event-label";
+          labelEl.textContent = TYPE_META[ev.type].icon + " " + ev.title;
+
+          const timeEl = document.createElement("div");
+          timeEl.className = "event-time";
+          timeEl.textContent = formatTime(ev.start) + "–" + formatTime(ev.end);
+
+          const body = document.createElement("div");
+          body.className = "event-body";
+
+          const arrow = document.createElement("div");
+          arrow.className = "event-arrow";
+
+          const handleLeft = document.createElement("div");
+          handleLeft.className = "handle left";
+          handleLeft.dataset.action = "resize-left";
+
+          const handleRight = document.createElement("div");
+          handleRight.className = "handle right";
+          handleRight.dataset.action = "resize-right";
+
+          eventEl.appendChild(labelEl);
+          eventEl.appendChild(timeEl);
+          eventEl.appendChild(body);
+          eventEl.appendChild(arrow);
+          eventEl.appendChild(handleLeft);
+          eventEl.appendChild(handleRight);
+
+          eventEl.addEventListener("pointerdown", onEventPointerDown);
+          eventEl.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectEvent(ev.id);
+          });
+
+          grid.appendChild(eventEl);
+        });
+
+        grid.addEventListener("click", () => {
+          selectedId = null;
+          renderSidebar();
+          renderBoard();
+        });
+
+        row.appendChild(grid);
+        board.appendChild(row);
+      }
+    }
+
+    function renderSidebar(){
+      const ev = getEventById(selectedId);
+      if(!ev){
+        sidebar.innerHTML = `
+          <div class="hint">Выбери событие на диаграмме.</div>
+          <div class="footer-note">
+            Можно перетаскивать событие по времени, между днями и по дорожкам внутри дня.
+            Текст вынесен над событием, чтобы в один день было удобно размещать несколько операций.
+          </div>
+        `;
+        return;
+      }
+
+      sidebar.innerHTML = `
+        <div class="summary-card ${ev.type}">
+          <div class="summary-title">${TYPE_META[ev.type].icon} ${TYPE_META[ev.type].label}</div>
+          <div>${DAYS[ev.day]} · ${formatTime(ev.start)}–${formatTime(ev.end)}</div>
+        </div>
+
+        <div class="field">
+          <label>Тип</label>
+          <select id="fieldType">
+            <option value="pickup" ${ev.type === "pickup" ? "selected":""}>Самовывоз</option>
+            <option value="delivery" ${ev.type === "delivery" ? "selected":""}>Доставка</option>
+            <option value="transfer" ${ev.type === "transfer" ? "selected":""}>Перемещение</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Название</label>
+          <input id="fieldTitle" type="text" value="${escapeHtml(ev.title)}" />
+        </div>
+
+        <div class="field">
+          <label>Пояснение</label>
+          <textarea id="fieldNote">${escapeHtml(ev.note)}</textarea>
+        </div>
+
+        <div class="field">
+          <label>День недели</label>
+          <select id="fieldDay">
+            ${DAYS.map((d,i)=>`<option value="${i}" ${i===ev.day?"selected":""}>${d}</option>`).join("")}
+          </select>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label>Начало</label>
+            <input id="fieldStart" type="time" step="900" value="${formatTime(ev.start)}" />
+          </div>
+          <div class="field">
+            <label>Окончание</label>
+            <input id="fieldEnd" type="time" step="900" value="${formatTime(ev.end)}" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Дорожка внутри дня</label>
+          <input id="fieldLane" type="number" min="0" step="1" value="${ev.lane}" />
+        </div>
+
+        <button class="btn danger" id="deleteBtn" style="width:100%;">Удалить событие</button>
+
+        <div class="footer-note">
+          Правила, внесённые в схему: самовывоз до/после 12:00, доставка до 18:00 через один рабочий день,
+          Ступино → СПБ до 17:00 понедельника и отгрузка во вторник с 14:00,
+          Шереметьево до 18:00 понедельника и отгрузка в среду,
+          Подольск: понедельник → среда, среда → пятница, четверг → понедельник.
+          Для перемещений указан допуск XL-формата.
+        </div>
+      `;
+
+      document.getElementById("fieldType").addEventListener("change", (e) => {
+        ev.type = e.target.value;
+        render();
+      });
+
+      document.getElementById("fieldTitle").addEventListener("input", (e) => {
+        ev.title = e.target.value;
+        renderBoard();
+      });
+
+      document.getElementById("fieldNote").addEventListener("input", (e) => {
+        ev.note = e.target.value;
+      });
+
+      document.getElementById("fieldDay").addEventListener("change", (e) => {
+        ev.day = Number(e.target.value);
+        normalizeLanes();
+        render();
+      });
+
+      document.getElementById("fieldStart").addEventListener("change", (e) => {
+        const val = parseTimeInput(e.target.value);
+        ev.start = clamp(snapMinutes(val), START_HOUR * 60, ev.end - MIN_DURATION);
+        render();
+      });
+
+      document.getElementById("fieldEnd").addEventListener("change", (e) => {
+        const val = parseTimeInput(e.target.value);
+        ev.end = clamp(snapMinutes(val), ev.start + MIN_DURATION, END_HOUR * 60);
+        render();
+      });
+
+      document.getElementById("fieldLane").addEventListener("input", (e) => {
+        ev.lane = Math.max(0, Number(e.target.value || 0));
+        renderBoard();
+      });
+
+      document.getElementById("deleteBtn").addEventListener("click", () => {
+        events = events.filter(x => x.id !== ev.id);
+        selectedId = events[0]?.id || null;
+        normalizeLanes();
+        render();
+      });
+    }
+
+    function parseTimeInput(value){
+      const [h,m] = value.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function escapeHtml(text){
+      return String(text)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+    }
+
+    function onEventPointerDown(e){
+      e.stopPropagation();
+
+      const eventEl = e.currentTarget;
+      const id = Number(eventEl.dataset.id);
+      const ev = getEventById(id);
+      if(!ev) return;
+
+      selectedId = id;
+      renderSidebar();
+      renderBoard();
+
+      const action = e.target.dataset.action || "move";
+
+      const boardRect = board.getBoundingClientRect();
+      dragState = {
+        id,
+        action,
+        startClientX: e.clientX,
+        startClientY: e.clientY,
+        originalStart: ev.start,
+        originalEnd: ev.end,
+        originalDay: ev.day,
+        originalLane: ev.lane,
+        boardRect
+      };
+
+      eventEl.setPointerCapture?.(e.pointerId);
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+    }
+
+    function onPointerMove(e){
+      if(!dragState) return;
+      const ev = getEventById(dragState.id);
+      if(!ev) return;
+
+      const dx = e.clientX - dragState.startClientX;
+      const minutesDelta = snapMinutes((dx / HOUR_WIDTH) * 60);
+
+      if(dragState.action === "move"){
+        const duration = dragState.originalEnd - dragState.originalStart;
+        let nextStart = dragState.originalStart + minutesDelta;
+        nextStart = clamp(nextStart, START_HOUR * 60, END_HOUR * 60 - duration);
+        let nextEnd = nextStart + duration;
+
+        const yWithinBoard = e.clientY - dragState.boardRect.top;
+        const dayIndex = clamp(getDayFromY(yWithinBoard), 0, DAYS.length - 1);
+        const lane = Math.max(0, getLaneFromY(yWithinBoard, dayIndex));
+
+        ev.day = dayIndex;
+        ev.lane = lane;
+        ev.start = nextStart;
+        ev.end = nextEnd;
+      }
+
+      if(dragState.action === "resize-left"){
+        let nextStart = dragState.originalStart + minutesDelta;
+        nextStart = clamp(nextStart, START_HOUR * 60, dragState.originalEnd - MIN_DURATION);
+        ev.start = nextStart;
+      }
+
+      if(dragState.action === "resize-right"){
+        let nextEnd = dragState.originalEnd + minutesDelta;
+        nextEnd = clamp(nextEnd, dragState.originalStart + MIN_DURATION, END_HOUR * 60);
+        ev.end = nextEnd;
+      }
+
+      renderBoard();
+      renderSidebar();
+    }
+
+    function onPointerUp(){
+      if(!dragState) return;
+      normalizeLanes();
+      dragState = null;
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      render();
+    }
+
+    function getDayFromY(y){
+      const header = 52;
+      let current = header;
+      for(let day = 0; day < DAYS.length; day++){
+        const lanes = getLaneCount(day);
+        const dayHeight = lanes * (56 + 12);
+        if(y >= current && y < current + dayHeight){
+          return day;
+        }
+        current += dayHeight;
+      }
+      return DAYS.length - 1;
+    }
+
+    function getLaneFromY(y, targetDay){
+      const header = 52;
+      let current = header;
+      for(let day = 0; day < DAYS.length; day++){
+        const lanes = getLaneCount(day);
+        const dayHeight = lanes * (56 + 12);
+        if(day === targetDay){
+          const innerY = y - current;
+          return Math.floor(innerY / (56 + 12));
+        }
+        current += dayHeight;
+      }
+      return 0;
+    }
+
+    addPickupBtn.addEventListener("click", () => createEvent("pickup"));
+    addDeliveryBtn.addEventListener("click", () => createEvent("delivery"));
+    addTransferBtn.addEventListener("click", () => createEvent("transfer"));
+    resetBtn.addEventListener("click", () => {
+      events = structuredClone(INITIAL_EVENTS);
+      selectedId = events[0]?.id || null;
       render();
     });
+    exportBtn.addEventListener("click", exportJSON);
 
-    eventType.addEventListener('change', () => {
-      const evt = getEventById(selectedId); if (!evt) return;
-      evt.type = eventType.value; updateEditor(); render();
-    });
-    eventTitle.addEventListener('input', () => {
-      const evt = getEventById(selectedId); if (!evt) return;
-      evt.title = eventTitle.value; render();
-    });
-    eventNote.addEventListener('input', () => {
-      const evt = getEventById(selectedId); if (!evt) return;
-      evt.note = eventNote.value; render();
-    });
-    eventDay.addEventListener('change', () => {
-      const evt = getEventById(selectedId); if (!evt) return;
-      evt.day = Number(eventDay.value); updateEditor(); render();
-    });
-    eventStart.addEventListener('change', () => {
-      const evt = getEventById(selectedId); if (!evt) return;
-      const start = snapMinutes(timeToMinutes(eventStart.value));
-      evt.start = clamp(start, START_HOUR * 60, evt.end - MIN_DURATION);
-      updateEditor(); render();
-    });
-    eventEnd.addEventListener('change', () => {
-      const evt = getEventById(selectedId); if (!evt) return;
-      const end = snapMinutes(timeToMinutes(eventEnd.value));
-      evt.end = clamp(end, evt.start + MIN_DURATION, END_HOUR * 60);
-      updateEditor(); render();
-    });
-
-    updateEditor();
+    normalizeLanes();
     render();
   </script>
 </body>
