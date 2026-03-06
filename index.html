@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Warehouse Schedule Gantt</title>
+  <title>Интерактивная диаграмма режима работы склада</title>
   <style>
     :root{
       --bg:#f5f7fb;
@@ -21,80 +21,181 @@
       --selected:#111827;
       --danger:#dc2626;
       --shadow:0 10px 30px rgba(15,23,42,.08);
-      --hour-width:110px;
-      --day-width:170px;
-      --header-h:52px;
-      --lane-h:56px;
-      --lane-gap:12px;
-      --event-h:18px;
-      --event-top:24px;
+
+      --hour-width:82px;
+      --day-width:130px;
+      --header-h:42px;
+      --lane-h:44px;
+      --lane-gap:8px;
+      --event-h:14px;
+      --event-top:30px;
     }
 
     *{box-sizing:border-box}
+
     body{
       margin:0;
       font-family:Arial, Helvetica, sans-serif;
       background:var(--bg);
       color:var(--text);
     }
-    body.dragging, body.dragging *{
+
+    body.dragging,
+    body.dragging *{
       user-select:none !important;
       -webkit-user-select:none !important;
       cursor:grabbing !important;
     }
 
-    .page{padding:20px;max-width:1800px;margin:0 auto}
-    .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-    .title{font-size:28px;font-weight:700;margin-right:auto}
+    .page{
+      padding:12px;
+      max-width:1800px;
+      margin:0 auto;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .title{
+      font-size:22px;
+      font-weight:700;
+      margin-right:auto;
+    }
+
     .chip{
-      background:#eef2f7;color:#334155;border:1px solid #dbe3ee;border-radius:999px;
-      padding:8px 12px;font-size:13px
+      background:#eef2f7;
+      color:#334155;
+      border:1px solid #dbe3ee;
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
     }
 
-    .layout{display:grid;grid-template-columns:minmax(900px,1fr) 360px;gap:16px}
+    .layout{
+      display:grid;
+      grid-template-columns:minmax(780px,1fr) 320px;
+      gap:12px;
+    }
+
     .panel{
-      background:var(--panel);border:1px solid #e5eaf1;border-radius:20px;
-      box-shadow:var(--shadow);overflow:hidden
+      background:var(--panel);
+      border:1px solid #e5eaf1;
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
-    .panel-head{
-      padding:16px 18px;border-bottom:1px solid #e8edf5;display:flex;
-      align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap
-    }
-    .panel-head h2{margin:0;font-size:18px}
-    .toolbar{display:flex;flex-wrap:wrap;gap:8px}
 
-    button, select, input, textarea{font:inherit}
+    .panel-head{
+      padding:12px 14px;
+      border-bottom:1px solid #e8edf5;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .panel-head h2{
+      margin:0;
+      font-size:16px;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    button, select, input, textarea{
+      font:inherit;
+    }
 
     .btn{
-      border:1px solid #d8e0ea;background:#fff;border-radius:12px;
-      padding:10px 14px;cursor:pointer;color:#0f172a
+      border:1px solid #d8e0ea;
+      background:#fff;
+      border-radius:10px;
+      padding:8px 12px;
+      cursor:pointer;
+      color:#0f172a;
+      font-size:13px;
     }
-    .btn:hover{background:#f8fafc}
-    .btn.primary{background:#0f172a;color:#fff;border-color:#0f172a}
-    .btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
 
-    .board-wrap{padding:14px;overflow:auto;background:#fff}
-    .board{position:relative;min-width:calc(var(--day-width) + 12 * var(--hour-width))}
+    .btn:hover{
+      background:#f8fafc;
+    }
+
+    .btn.primary{
+      background:#0f172a;
+      color:#fff;
+      border-color:#0f172a;
+    }
+
+    .btn.danger{
+      background:var(--danger);
+      color:#fff;
+      border-color:var(--danger);
+    }
+
+    .board-wrap{
+      padding:10px;
+      overflow:auto;
+      background:#fff;
+    }
+
+    .board{
+      position:relative;
+      min-width:calc(var(--day-width) + 12 * var(--hour-width));
+    }
 
     .time-header{
       display:grid;
       grid-template-columns:var(--day-width) repeat(12, var(--hour-width));
-      position:sticky;top:0;z-index:20;background:#fff
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:#fff;
     }
+
     .time-cell{
-      height:var(--header-h);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
-      border-right:1px solid var(--line);display:flex;align-items:center;padding:0 10px;
-      font-weight:700;color:#334155;background:#f8fafc
+      height:var(--header-h);
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      border-right:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      padding:0 8px;
+      font-weight:700;
+      color:#334155;
+      background:#f8fafc;
+      font-size:12px;
     }
-    .time-cell:first-child{border-left:1px solid var(--line)}
+
+    .time-cell:first-child{
+      border-left:1px solid var(--line);
+    }
 
     .day-row{
-      display:grid;grid-template-columns:var(--day-width) 1fr;border-left:1px solid var(--line);
-      border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff
+      display:grid;
+      grid-template-columns:var(--day-width) 1fr;
+      border-left:1px solid var(--line);
+      border-right:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+      background:#fff;
     }
+
     .day-label{
-      padding:18px 14px;font-size:18px;font-weight:700;background:#f8fafc;
-      border-right:1px solid var(--line);display:flex;align-items:flex-start
+      padding:12px 10px;
+      font-size:14px;
+      font-weight:700;
+      background:#f8fafc;
+      border-right:1px solid var(--line);
+      display:flex;
+      align-items:flex-start;
     }
 
     .day-grid{
@@ -123,7 +224,10 @@
       height:calc(var(--lane-h) + var(--lane-gap));
       border-bottom:1px dashed #eef2f7;
     }
-    .lane:last-child{border-bottom:none}
+
+    .lane:last-child{
+      border-bottom:none;
+    }
 
     .event{
       position:absolute;
@@ -135,62 +239,188 @@
       z-index:5;
       touch-action:none;
     }
-    .event.selected{outline:2px solid var(--selected);outline-offset:1px;z-index:9}
-    .event.pickup{background:var(--pickup);border-color:var(--pickup-border)}
-    .event.delivery{background:var(--delivery);border-color:var(--delivery-border)}
-    .event.transfer{background:var(--transfer);border-color:var(--transfer-border)}
 
-    .event-body{position:absolute;inset:0 14px 0 14px;border-radius:999px}
-    .event-arrow{
-      position:absolute;right:-2px;top:50%;transform:translateY(-50%);
-      width:0;height:0;border-top:11px solid transparent;border-bottom:11px solid transparent;
-      border-left:16px solid currentColor
+    .event.selected{
+      outline:2px solid var(--selected);
+      outline-offset:1px;
+      z-index:9;
     }
+
+    .event.pickup{
+      background:var(--pickup);
+      border-color:var(--pickup-border);
+    }
+
+    .event.delivery{
+      background:var(--delivery);
+      border-color:var(--delivery-border);
+    }
+
+    .event.transfer{
+      background:var(--transfer);
+      border-color:var(--transfer-border);
+    }
+
+    .event-body{
+      position:absolute;
+      inset:0 12px 0 12px;
+      border-radius:999px;
+    }
+
+    .event-arrow{
+      position:absolute;
+      right:-2px;
+      top:50%;
+      transform:translateY(-50%);
+      width:0;
+      height:0;
+      border-top:9px solid transparent;
+      border-bottom:9px solid transparent;
+      border-left:14px solid currentColor;
+    }
+
     .event.pickup .event-arrow{color:var(--pickup-border)}
     .event.delivery .event-arrow{color:var(--delivery-border)}
     .event.transfer .event-arrow{color:var(--transfer-border)}
 
     .handle{
-      position:absolute;top:50%;transform:translateY(-50%);
-      width:12px;height:24px;border-radius:10px;background:#111827;z-index:10;
+      position:absolute;
+      top:50%;
+      transform:translateY(-50%);
+      width:10px;
+      height:20px;
+      border-radius:8px;
+      background:#111827;
+      z-index:10;
       touch-action:none;
     }
-    .handle.left{left:-6px;cursor:ew-resize}
-    .handle.right{right:-6px;cursor:ew-resize}
+
+    .handle.left{
+      left:-5px;
+      cursor:ew-resize;
+    }
+
+    .handle.right{
+      right:-5px;
+      cursor:ew-resize;
+    }
 
     .event-label{
-      position:absolute;top:2px;left:0;font-size:13px;line-height:1;font-weight:700;color:#0f172a;
-      white-space:nowrap;pointer-events:none;background:rgba(255,255,255,.92);padding:1px 6px;
-      border-radius:8px;border:1px solid rgba(203,213,225,.7)
+      position:absolute;
+      top:-18px;
+      left:0;
+      font-size:11px;
+      line-height:1;
+      font-weight:700;
+      color:#0f172a;
+      white-space:nowrap;
+      pointer-events:none;
+      background:rgba(255,255,255,.94);
+      padding:1px 5px;
+      border-radius:6px;
+      border:1px solid rgba(203,213,225,.8);
     }
+
     .event-time{
-      position:absolute;top:44px;left:0;font-size:12px;color:#475467;white-space:nowrap;
-      pointer-events:none;background:rgba(255,255,255,.92);padding:1px 6px;border-radius:8px;
-      border:1px solid rgba(203,213,225,.7)
+      position:absolute;
+      top:-34px;
+      left:0;
+      font-size:10px;
+      color:#475467;
+      white-space:nowrap;
+      pointer-events:none;
+      background:rgba(255,255,255,.94);
+      padding:1px 5px;
+      border-radius:6px;
+      border:1px solid rgba(203,213,225,.8);
     }
 
-    .sidebar{padding:16px}
-    .summary-card{border-radius:18px;padding:14px;margin-bottom:14px;border:2px solid transparent}
-    .summary-card.pickup{background:var(--pickup);border-color:var(--pickup-border)}
-    .summary-card.delivery{background:var(--delivery);border-color:var(--delivery-border)}
-    .summary-card.transfer{background:var(--transfer);border-color:var(--transfer-border)}
-    .summary-title{font-weight:700;margin-bottom:8px;font-size:14px}
-
-    .field{margin-bottom:12px}
-    .field label{display:block;font-size:13px;font-weight:700;color:#475467;margin-bottom:6px}
-    .field input,.field select,.field textarea{
-      width:100%;border:1px solid #cfd8e3;border-radius:12px;padding:11px 12px;background:#fff
+    .sidebar{
+      padding:12px;
     }
-    .field textarea{min-height:82px;resize:vertical}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .hint{color:#667085;font-size:13px;line-height:1.45}
+
+    .summary-card{
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:12px;
+      border:2px solid transparent;
+    }
+
+    .summary-card.pickup{
+      background:var(--pickup);
+      border-color:var(--pickup-border);
+    }
+
+    .summary-card.delivery{
+      background:var(--delivery);
+      border-color:var(--delivery-border);
+    }
+
+    .summary-card.transfer{
+      background:var(--transfer);
+      border-color:var(--transfer-border);
+    }
+
+    .summary-title{
+      font-weight:700;
+      margin-bottom:6px;
+      font-size:13px;
+    }
+
+    .field{
+      margin-bottom:10px;
+    }
+
+    .field label{
+      display:block;
+      font-size:12px;
+      font-weight:700;
+      color:#475467;
+      margin-bottom:5px;
+    }
+
+    .field input,
+    .field select,
+    .field textarea{
+      width:100%;
+      border:1px solid #cfd8e3;
+      border-radius:10px;
+      padding:9px 10px;
+      background:#fff;
+      font-size:13px;
+    }
+
+    .field textarea{
+      min-height:72px;
+      resize:vertical;
+    }
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+    }
+
+    .hint{
+      color:#667085;
+      font-size:12px;
+      line-height:1.4;
+    }
+
     .footer-note{
-      margin-top:10px;padding:12px;border:1px dashed #d8e0ea;background:#fafcff;
-      border-radius:14px;font-size:13px;color:#475467
+      margin-top:8px;
+      padding:10px;
+      border:1px dashed #d8e0ea;
+      background:#fafcff;
+      border-radius:12px;
+      font-size:12px;
+      color:#475467;
     }
 
     @media (max-width:1200px){
-      .layout{grid-template-columns:1fr}
+      .layout{
+        grid-template-columns:1fr;
+      }
     }
   </style>
 </head>
@@ -233,9 +463,10 @@
     const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница"];
     const START_HOUR = 8;
     const END_HOUR = 20;
-    const HOUR_WIDTH = 110;
-    const HEADER_H = 52;
-    const LANE_STEP = 68;
+    const HOUR_WIDTH = 82;
+    const DAY_WIDTH = 130;
+    const HEADER_H = 42;
+    const LANE_STEP = 52;
     const SNAP_MINUTES = 15;
     const MIN_DURATION = 30;
 
@@ -246,19 +477,136 @@
     };
 
     const INITIAL_EVENTS = [
-      { id:1, type:"pickup", day:0, lane:0, start:8*60,  end:12*60, title:"Самовывоз: приём заявок", note:"Реализации, созданные в 1С до 12:00 текущего дня, собираем и отгружаем в этот же день." },
-      { id:2, type:"pickup", day:0, lane:1, start:12*60, end:20*60, title:"Самовывоз: отгрузка следующего рабочего дня", note:"Заявки на самовывоз, созданные после 12:00 текущего дня, отгружаются на следующий рабочий день в интервале 09:00–20:00. Заезд на территорию до 19:00." },
-      { id:3, type:"delivery", day:0, lane:2, start:8*60, end:18*60, title:"Доставка: приём заявок", note:"Заявки на отгрузку, созданные в 1С до 18:00 текущего дня, отгружаются и доставляются через один рабочий день. Выходные не считаем." },
-      { id:4, type:"transfer", day:0, lane:3, start:8*60, end:17*60, title:"Ступино → СПБ: приём заявок", note:"Заявки, созданные в 1С до 17:00 понедельника." },
-      { id:5, type:"transfer", day:1, lane:0, start:14*60,end:20*60, title:"Ступино → СПБ: отгрузка", note:"Отгрузка во вторник с 14:00. Перемещение один раз в неделю. XL-формат допустим." },
-      { id:6, type:"transfer", day:0, lane:4, start:8*60, end:18*60, title:"Ступино → Шереметьево: приём заявок", note:"Заявки, созданные в 1С до 18:00 понедельника." },
-      { id:7, type:"transfer", day:2, lane:0, start:9*60, end:16*60, title:"Ступино → Шереметьево: отгрузка", note:"Отгрузка в среду. Перемещение один раз в неделю. XL-формат допустим." },
-      { id:8, type:"transfer", day:0, lane:5, start:8*60, end:18*60, title:"Ступино → Подольск: приём заявок 1", note:"Заявки, созданные в 1С до 18:00 понедельника." },
-      { id:9, type:"transfer", day:2, lane:1, start:9*60, end:16*60, title:"Ступино → Подольск: отгрузка 1", note:"Заявки, созданные в 1С до 18:00 понедельника, отгружаются в среду. XL-формат допустим." },
-      { id:10,type:"transfer", day:2, lane:2, start:8*60, end:18*60, title:"Ступино → Подольск: приём заявок 2", note:"Заявки, созданные в 1С до 18:00 среды, включая заявки вторника." },
-      { id:11,type:"transfer", day:4, lane:0, start:9*60, end:16*60, title:"Ступино → Подольск: отгрузка 2", note:"Заявки, созданные в 1С до 18:00 среды, отгружаются в пятницу, включая заявки вторника. XL-формат допустим." },
-      { id:12,type:"transfer", day:3, lane:0, start:8*60, end:18*60, title:"Ступино → Подольск: приём заявок 3", note:"Заявки, созданные в 1С до 18:00 четверга." },
-      { id:13,type:"transfer", day:0, lane:6, start:8*60, end:20*60, title:"Ступино → Подольск: отгрузка 3", note:"Заявки, созданные в 1С до 18:00 четверга, отгружаются в понедельник. XL-формат допустим." }
+      {
+        id: 1,
+        type: "pickup",
+        day: 0,
+        lane: 0,
+        start: 8 * 60,
+        end: 12 * 60,
+        title: "Самовывоз: приём заявок",
+        note: "Заявки на отгрузку, созданные в 1С до 12:00 текущего дня, собираем и отгружаем в этот же день. Заезд на территорию до 19:00, отгрузка до 20:00."
+      },
+      {
+        id: 2,
+        type: "pickup",
+        day: 0,
+        lane: 1,
+        start: 12 * 60,
+        end: 20 * 60,
+        title: "Самовывоз: отгрузка следующего рабочего дня",
+        note: "Заявки на самовывоз, созданные после 12:00 текущего дня, отгружаются на следующий рабочий день в интервале 09:00–20:00. Заезд на территорию до 19:00."
+      },
+      {
+        id: 3,
+        type: "delivery",
+        day: 0,
+        lane: 2,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Доставка: приём заявок",
+        note: "Заявки на отгрузку, созданные в 1С до 18:00 текущего дня, отгружаются и доставляются через один рабочий день. Выходные не считаем."
+      },
+      {
+        id: 4,
+        type: "transfer",
+        day: 0,
+        lane: 3,
+        start: 8 * 60,
+        end: 17 * 60,
+        title: "Ступино → СПБ: приём заявок",
+        note: "Заявки, созданные в 1С до 17:00 понедельника."
+      },
+      {
+        id: 5,
+        type: "transfer",
+        day: 1,
+        lane: 0,
+        start: 14 * 60,
+        end: 20 * 60,
+        title: "Ступино → СПБ: отгрузка",
+        note: "Отгрузка во вторник с 14:00. Перемещение один раз в неделю. XL-формат допустим."
+      },
+      {
+        id: 6,
+        type: "transfer",
+        day: 0,
+        lane: 4,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Ступино → Шереметьево: приём заявок",
+        note: "Заявки, созданные в 1С до 18:00 понедельника."
+      },
+      {
+        id: 7,
+        type: "transfer",
+        day: 2,
+        lane: 0,
+        start: 9 * 60,
+        end: 16 * 60,
+        title: "Ступино → Шереметьево: отгрузка",
+        note: "Отгрузка в среду. Перемещение один раз в неделю. XL-формат допустим."
+      },
+      {
+        id: 8,
+        type: "transfer",
+        day: 0,
+        lane: 5,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Ступино → Подольск: приём заявок 1",
+        note: "Заявки, созданные в 1С до 18:00 понедельника."
+      },
+      {
+        id: 9,
+        type: "transfer",
+        day: 2,
+        lane: 1,
+        start: 9 * 60,
+        end: 16 * 60,
+        title: "Ступино → Подольск: отгрузка 1",
+        note: "Заявки, созданные в 1С до 18:00 понедельника, отгружаются в среду. XL-формат допустим."
+      },
+      {
+        id: 10,
+        type: "transfer",
+        day: 2,
+        lane: 2,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Ступино → Подольск: приём заявок 2",
+        note: "Заявки, созданные в 1С до 18:00 среды, включая заявки вторника."
+      },
+      {
+        id: 11,
+        type: "transfer",
+        day: 4,
+        lane: 0,
+        start: 9 * 60,
+        end: 16 * 60,
+        title: "Ступино → Подольск: отгрузка 2",
+        note: "Заявки, созданные в 1С до 18:00 среды, отгружаются в пятницу, включая заявки вторника. XL-формат допустим."
+      },
+      {
+        id: 12,
+        type: "transfer",
+        day: 3,
+        lane: 0,
+        start: 8 * 60,
+        end: 18 * 60,
+        title: "Ступино → Подольск: приём заявок 3",
+        note: "Заявки, созданные в 1С до 18:00 четверга."
+      },
+      {
+        id: 13,
+        type: "transfer",
+        day: 0,
+        lane: 6,
+        start: 8 * 60,
+        end: 20 * 60,
+        title: "Ступино → Подольск: отгрузка 3",
+        note: "Заявки, созданные в 1С до 18:00 четверга, отгружаются в понедельник. XL-формат допустим."
+      }
     ];
 
     let events = structuredClone(INITIAL_EVENTS);
@@ -278,23 +626,33 @@
     });
     document.getElementById("exportBtn").addEventListener("click", exportJSON);
 
-    function snapMinutes(v){ return Math.round(v / SNAP_MINUTES) * SNAP_MINUTES; }
-    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+    function snapMinutes(v){
+      return Math.round(v / SNAP_MINUTES) * SNAP_MINUTES;
+    }
+
+    function clamp(v, min, max){
+      return Math.max(min, Math.min(max, v));
+    }
+
     function formatTime(minutes){
       const h = Math.floor(minutes / 60);
       const m = minutes % 60;
       return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
     }
+
     function parseTimeInput(value){
       const [h,m] = value.split(":").map(Number);
       return h * 60 + m;
     }
+
     function minutesToX(minutes){
       return ((minutes - START_HOUR * 60) / 60) * HOUR_WIDTH;
     }
+
     function xToMinutes(px){
       return START_HOUR * 60 + (px / HOUR_WIDTH) * 60;
     }
+
     function escapeHtml(text){
       return String(text)
         .replaceAll("&","&amp;")
@@ -302,12 +660,15 @@
         .replaceAll(">","&gt;")
         .replaceAll('"',"&quot;");
     }
+
     function getEventById(id){
       return events.find(e => e.id === id);
     }
+
     function getDayEvents(day){
       return events.filter(e => e.day === day);
     }
+
     function getLaneCount(day){
       const dayEvents = getDayEvents(day);
       const maxLane = dayEvents.length ? Math.max(...dayEvents.map(e => e.lane)) : 0;
@@ -442,7 +803,7 @@
 
           const left = minutesToX(ev.start);
           const width = Math.max(40, minutesToX(ev.end) - minutesToX(ev.start));
-          const top = ev.lane * LANE_STEP + 24;
+          const top = ev.lane * LANE_STEP + 30;
 
           el.style.left = left + "px";
           el.style.width = width + "px";
@@ -478,9 +839,21 @@
           el.appendChild(rightHandle);
 
           el.addEventListener("pointerdown", onPointerDownEvent);
+          el.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectedId = ev.id;
+            renderSidebar();
+            renderBoard();
+          });
 
           grid.appendChild(el);
         }
+
+        grid.addEventListener("click", () => {
+          selectedId = null;
+          renderSidebar();
+          renderBoard();
+        });
 
         row.appendChild(grid);
         board.appendChild(row);
@@ -578,14 +951,14 @@
       });
 
       document.getElementById("fieldStart").addEventListener("change", e => {
-        const val = clamp(snapMinutes(parseTimeInput(e.target.value)), START_HOUR*60, ev.end - MIN_DURATION);
+        const val = clamp(snapMinutes(parseTimeInput(e.target.value)), START_HOUR * 60, ev.end - MIN_DURATION);
         ev.start = val;
         normalizeLanes();
         render();
       });
 
       document.getElementById("fieldEnd").addEventListener("change", e => {
-        const val = clamp(snapMinutes(parseTimeInput(e.target.value)), ev.start + MIN_DURATION, END_HOUR*60);
+        const val = clamp(snapMinutes(parseTimeInput(e.target.value)), ev.start + MIN_DURATION, END_HOUR * 60);
         ev.end = val;
         normalizeLanes();
         render();
@@ -642,14 +1015,14 @@
       if(!ev) return;
 
       const dx = e.clientX - dragState.startClientX;
-      const boardX = e.clientX - dragState.boardRect.left - 170;
+      const boardX = e.clientX - dragState.boardRect.left - DAY_WIDTH;
       const boardY = e.clientY - dragState.boardRect.top;
 
       if(dragState.action === "move"){
         const duration = dragState.originalEnd - dragState.originalStart;
 
         let nextStart = snapMinutes(dragState.originalStart + (dx / HOUR_WIDTH) * 60);
-        nextStart = clamp(nextStart, START_HOUR*60, END_HOUR*60 - duration);
+        nextStart = clamp(nextStart, START_HOUR * 60, END_HOUR * 60 - duration);
 
         const nextDay = clamp(getDayFromBoardY(boardY), 0, DAYS.length - 1);
         const nextLane = Math.max(0, getLaneFromBoardY(boardY, nextDay));
@@ -662,13 +1035,13 @@
 
       if(dragState.action === "resize-left"){
         let nextStart = snapMinutes(xToMinutes(boardX));
-        nextStart = clamp(nextStart, START_HOUR*60, ev.end - MIN_DURATION);
+        nextStart = clamp(nextStart, START_HOUR * 60, ev.end - MIN_DURATION);
         ev.start = nextStart;
       }
 
       if(dragState.action === "resize-right"){
         let nextEnd = snapMinutes(xToMinutes(boardX));
-        nextEnd = clamp(nextEnd, ev.start + MIN_DURATION, END_HOUR*60);
+        nextEnd = clamp(nextEnd, ev.start + MIN_DURATION, END_HOUR * 60);
         ev.end = nextEnd;
       }
 
