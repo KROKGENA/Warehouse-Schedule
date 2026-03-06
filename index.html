@@ -20,15 +20,12 @@
       --transfer-border:#f59e0b;
       --selected:#111827;
       --danger:#dc2626;
-      --radius:16px;
       --shadow:0 10px 30px rgba(15,23,42,.08);
       --hour-width:110px;
       --day-width:170px;
-      --toolbar-h:64px;
       --header-h:52px;
       --lane-h:56px;
       --lane-gap:12px;
-      --label-h:18px;
       --event-h:18px;
       --event-top:24px;
     }
@@ -36,162 +33,72 @@
     *{box-sizing:border-box}
     body{
       margin:0;
-      font-family: Arial, Helvetica, sans-serif;
+      font-family:Arial, Helvetica, sans-serif;
       background:var(--bg);
       color:var(--text);
     }
-
-    .page{
-      padding:20px;
-      max-width:1800px;
-      margin:0 auto;
+    body.dragging, body.dragging *{
+      user-select:none !important;
+      -webkit-user-select:none !important;
+      cursor:grabbing !important;
     }
 
-    .topbar{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:16px;
-    }
-
-    .title{
-      font-size:28px;
-      font-weight:700;
-      margin-right:auto;
-    }
-
+    .page{padding:20px;max-width:1800px;margin:0 auto}
+    .topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+    .title{font-size:28px;font-weight:700;margin-right:auto}
     .chip{
-      background:#eef2f7;
-      color:#334155;
-      border:1px solid #dbe3ee;
-      border-radius:999px;
-      padding:8px 12px;
-      font-size:13px;
+      background:#eef2f7;color:#334155;border:1px solid #dbe3ee;border-radius:999px;
+      padding:8px 12px;font-size:13px
     }
 
-    .layout{
-      display:grid;
-      grid-template-columns:minmax(900px,1fr) 360px;
-      gap:16px;
-    }
-
+    .layout{display:grid;grid-template-columns:minmax(900px,1fr) 360px;gap:16px}
     .panel{
-      background:var(--panel);
-      border:1px solid #e5eaf1;
-      border-radius:20px;
-      box-shadow:var(--shadow);
-      overflow:hidden;
+      background:var(--panel);border:1px solid #e5eaf1;border-radius:20px;
+      box-shadow:var(--shadow);overflow:hidden
     }
-
     .panel-head{
-      padding:16px 18px;
-      border-bottom:1px solid #e8edf5;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      flex-wrap:wrap;
+      padding:16px 18px;border-bottom:1px solid #e8edf5;display:flex;
+      align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap
     }
+    .panel-head h2{margin:0;font-size:18px}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px}
 
-    .panel-head h2{
-      margin:0;
-      font-size:18px;
-    }
-
-    .toolbar{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-
-    button, select, input, textarea{
-      font:inherit;
-    }
+    button, select, input, textarea{font:inherit}
 
     .btn{
-      border:1px solid #d8e0ea;
-      background:#fff;
-      border-radius:12px;
-      padding:10px 14px;
-      cursor:pointer;
-      color:#0f172a;
+      border:1px solid #d8e0ea;background:#fff;border-radius:12px;
+      padding:10px 14px;cursor:pointer;color:#0f172a
     }
-
     .btn:hover{background:#f8fafc}
-    .btn.primary{
-      background:#0f172a;
-      color:#fff;
-      border-color:#0f172a;
-    }
-    .btn.primary:hover{opacity:.95}
-    .btn.danger{
-      background:var(--danger);
-      color:#fff;
-      border-color:var(--danger);
-    }
+    .btn.primary{background:#0f172a;color:#fff;border-color:#0f172a}
+    .btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
 
-    .board-wrap{
-      padding:14px;
-      overflow:auto;
-      background:#fff;
-    }
-
-    .board{
-      position:relative;
-      min-width:calc(var(--day-width) + 12 * var(--hour-width));
-      user-select:none;
-    }
+    .board-wrap{padding:14px;overflow:auto;background:#fff}
+    .board{position:relative;min-width:calc(var(--day-width) + 12 * var(--hour-width))}
 
     .time-header{
       display:grid;
       grid-template-columns:var(--day-width) repeat(12, var(--hour-width));
-      position:sticky;
-      top:0;
-      z-index:20;
-      background:#fff;
+      position:sticky;top:0;z-index:20;background:#fff
     }
-
     .time-cell{
-      height:var(--header-h);
-      border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-      border-right:1px solid var(--line);
-      display:flex;
-      align-items:center;
-      padding:0 10px;
-      font-weight:700;
-      color:#334155;
-      background:#f8fafc;
+      height:var(--header-h);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+      border-right:1px solid var(--line);display:flex;align-items:center;padding:0 10px;
+      font-weight:700;color:#334155;background:#f8fafc
     }
-
-    .time-cell:first-child{
-      border-left:1px solid var(--line);
-      background:#f8fafc;
-    }
+    .time-cell:first-child{border-left:1px solid var(--line)}
 
     .day-row{
-      display:grid;
-      grid-template-columns:var(--day-width) 1fr;
-      border-left:1px solid var(--line);
-      border-right:1px solid var(--line);
-      border-bottom:1px solid var(--line);
-      background:#fff;
+      display:grid;grid-template-columns:var(--day-width) 1fr;border-left:1px solid var(--line);
+      border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff
     }
-
     .day-label{
-      padding:18px 14px;
-      font-size:18px;
-      font-weight:700;
-      background:#f8fafc;
-      border-right:1px solid var(--line);
-      display:flex;
-      align-items:flex-start;
+      padding:18px 14px;font-size:18px;font-weight:700;background:#f8fafc;
+      border-right:1px solid var(--line);display:flex;align-items:flex-start
     }
 
     .day-grid{
       position:relative;
-      min-height:120px;
       background:
         repeating-linear-gradient(
           to right,
@@ -216,10 +123,7 @@
       height:calc(var(--lane-h) + var(--lane-gap));
       border-bottom:1px dashed #eef2f7;
     }
-
-    .lane:last-child{
-      border-bottom:none;
-    }
+    .lane:last-child{border-bottom:none}
 
     .event{
       position:absolute;
@@ -229,177 +133,63 @@
       border:2px solid transparent;
       cursor:grab;
       z-index:5;
+      touch-action:none;
     }
+    .event.selected{outline:2px solid var(--selected);outline-offset:1px;z-index:9}
+    .event.pickup{background:var(--pickup);border-color:var(--pickup-border)}
+    .event.delivery{background:var(--delivery);border-color:var(--delivery-border)}
+    .event.transfer{background:var(--transfer);border-color:var(--transfer-border)}
 
-    .event.selected{
-      outline:2px solid var(--selected);
-      outline-offset:1px;
-      z-index:9;
-    }
-
-    .event.pickup{
-      background:var(--pickup);
-      border-color:var(--pickup-border);
-    }
-
-    .event.delivery{
-      background:var(--delivery);
-      border-color:var(--delivery-border);
-    }
-
-    .event.transfer{
-      background:var(--transfer);
-      border-color:var(--transfer-border);
-    }
-
-    .event-body{
-      position:absolute;
-      inset:0 14px 0 14px;
-      border-radius:999px;
-    }
-
+    .event-body{position:absolute;inset:0 14px 0 14px;border-radius:999px}
     .event-arrow{
-      position:absolute;
-      right:-2px;
-      top:50%;
-      transform:translateY(-50%);
-      width:0;
-      height:0;
-      border-top:11px solid transparent;
-      border-bottom:11px solid transparent;
-      border-left:16px solid currentColor;
-      filter:drop-shadow(0 0 0 rgba(0,0,0,0));
+      position:absolute;right:-2px;top:50%;transform:translateY(-50%);
+      width:0;height:0;border-top:11px solid transparent;border-bottom:11px solid transparent;
+      border-left:16px solid currentColor
     }
-
     .event.pickup .event-arrow{color:var(--pickup-border)}
     .event.delivery .event-arrow{color:var(--delivery-border)}
     .event.transfer .event-arrow{color:var(--transfer-border)}
 
     .handle{
-      position:absolute;
-      top:50%;
-      transform:translateY(-50%);
-      width:12px;
-      height:24px;
-      border-radius:10px;
-      background:#111827;
-      cursor:ew-resize;
-      z-index:10;
+      position:absolute;top:50%;transform:translateY(-50%);
+      width:12px;height:24px;border-radius:10px;background:#111827;z-index:10;
+      touch-action:none;
     }
-
-    .handle.left{left:-6px}
-    .handle.right{right:-6px}
+    .handle.left{left:-6px;cursor:ew-resize}
+    .handle.right{right:-6px;cursor:ew-resize}
 
     .event-label{
-      position:absolute;
-      top:2px;
-      left:0;
-      font-size:13px;
-      line-height:1;
-      font-weight:700;
-      color:#0f172a;
-      white-space:nowrap;
-      pointer-events:none;
-      background:rgba(255,255,255,.92);
-      padding:1px 6px;
-      border-radius:8px;
-      border:1px solid rgba(203,213,225,.7);
+      position:absolute;top:2px;left:0;font-size:13px;line-height:1;font-weight:700;color:#0f172a;
+      white-space:nowrap;pointer-events:none;background:rgba(255,255,255,.92);padding:1px 6px;
+      border-radius:8px;border:1px solid rgba(203,213,225,.7)
     }
-
     .event-time{
-      position:absolute;
-      top:44px;
-      left:0;
-      font-size:12px;
-      color:#475467;
-      white-space:nowrap;
-      pointer-events:none;
-      background:rgba(255,255,255,.92);
-      padding:1px 6px;
-      border-radius:8px;
-      border:1px solid rgba(203,213,225,.7);
+      position:absolute;top:44px;left:0;font-size:12px;color:#475467;white-space:nowrap;
+      pointer-events:none;background:rgba(255,255,255,.92);padding:1px 6px;border-radius:8px;
+      border:1px solid rgba(203,213,225,.7)
     }
 
-    .sidebar{
-      padding:16px;
-    }
+    .sidebar{padding:16px}
+    .summary-card{border-radius:18px;padding:14px;margin-bottom:14px;border:2px solid transparent}
+    .summary-card.pickup{background:var(--pickup);border-color:var(--pickup-border)}
+    .summary-card.delivery{background:var(--delivery);border-color:var(--delivery-border)}
+    .summary-card.transfer{background:var(--transfer);border-color:var(--transfer-border)}
+    .summary-title{font-weight:700;margin-bottom:8px;font-size:14px}
 
-    .summary-card{
-      border-radius:18px;
-      padding:14px;
-      margin-bottom:14px;
-      border:2px solid transparent;
+    .field{margin-bottom:12px}
+    .field label{display:block;font-size:13px;font-weight:700;color:#475467;margin-bottom:6px}
+    .field input,.field select,.field textarea{
+      width:100%;border:1px solid #cfd8e3;border-radius:12px;padding:11px 12px;background:#fff
     }
-
-    .summary-card.pickup{
-      background:var(--pickup);
-      border-color:var(--pickup-border);
-    }
-    .summary-card.delivery{
-      background:var(--delivery);
-      border-color:var(--delivery-border);
-    }
-    .summary-card.transfer{
-      background:var(--transfer);
-      border-color:var(--transfer-border);
-    }
-
-    .summary-title{
-      font-weight:700;
-      margin-bottom:8px;
-      font-size:14px;
-    }
-
-    .field{
-      margin-bottom:12px;
-    }
-
-    .field label{
-      display:block;
-      font-size:13px;
-      font-weight:700;
-      color:#475467;
-      margin-bottom:6px;
-    }
-
-    .field input,
-    .field select,
-    .field textarea{
-      width:100%;
-      border:1px solid #cfd8e3;
-      border-radius:12px;
-      padding:11px 12px;
-      background:#fff;
-    }
-
-    .field textarea{
-      min-height:82px;
-      resize:vertical;
-    }
-
-    .grid-2{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-
-    .hint{
-      color:#667085;
-      font-size:13px;
-      line-height:1.45;
-    }
-
+    .field textarea{min-height:82px;resize:vertical}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .hint{color:#667085;font-size:13px;line-height:1.45}
     .footer-note{
-      margin-top:10px;
-      padding:12px;
-      border:1px dashed #d8e0ea;
-      background:#fafcff;
-      border-radius:14px;
-      font-size:13px;
-      color:#475467;
+      margin-top:10px;padding:12px;border:1px dashed #d8e0ea;background:#fafcff;
+      border-radius:14px;font-size:13px;color:#475467
     }
 
-    @media (max-width: 1200px){
+    @media (max-width:1200px){
       .layout{grid-template-columns:1fr}
     }
   </style>
@@ -443,9 +233,9 @@
     const DAYS = ["Понедельник","Вторник","Среда","Четверг","Пятница"];
     const START_HOUR = 8;
     const END_HOUR = 20;
-    const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60; // 720
     const HOUR_WIDTH = 110;
-    const DAY_WIDTH = 170;
+    const HEADER_H = 52;
+    const LANE_STEP = 68;
     const SNAP_MINUTES = 15;
     const MIN_DURATION = 30;
 
@@ -456,184 +246,72 @@
     };
 
     const INITIAL_EVENTS = [
-      {
-        id: 1,
-        type: "pickup",
-        day: 0,
-        lane: 0,
-        start: 8 * 60,
-        end: 12 * 60,
-        title: "Самовывоз: приём заявок",
-        note: "Реализации, созданные в 1С до 12:00 текущего дня, собираем и отгружаем в этот же день."
-      },
-      {
-        id: 2,
-        type: "pickup",
-        day: 0,
-        lane: 1,
-        start: 12 * 60,
-        end: 20 * 60,
-        title: "Самовывоз: отгрузка следующего рабочего дня",
-        note: "Заявки после 12:00 текущего дня отгружаются на следующий рабочий день в интервале 09:00–20:00. Заезд на территорию до 19:00."
-      },
-      {
-        id: 3,
-        type: "delivery",
-        day: 0,
-        lane: 0,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Доставка: приём заявок",
-        note: "Реализации, созданные в 1С до 18:00 текущего дня, отгружаются и доставляются через один рабочий день. Выходные не считаем."
-      },
-      {
-        id: 4,
-        type: "transfer",
-        day: 0,
-        lane: 2,
-        start: 8 * 60,
-        end: 17 * 60,
-        title: "Ступино → СПБ: приём заявок",
-        note: "Заявки до 17:00 понедельника."
-      },
-      {
-        id: 5,
-        type: "transfer",
-        day: 1,
-        lane: 0,
-        start: 14 * 60,
-        end: 20 * 60,
-        title: "Ступино → СПБ: отгрузка",
-        note: "Отгрузка во вторник с 14:00. Перемещение один раз в неделю. XL-формат допустим."
-      },
-      {
-        id: 6,
-        type: "transfer",
-        day: 0,
-        lane: 3,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Ступино → Шереметьево: приём заявок",
-        note: "Заявки до 18:00 понедельника."
-      },
-      {
-        id: 7,
-        type: "transfer",
-        day: 2,
-        lane: 0,
-        start: 9 * 60,
-        end: 16 * 60,
-        title: "Ступино → Шереметьево: отгрузка",
-        note: "Отгрузка в среду. Перемещение один раз в неделю. XL-формат допустим."
-      },
-      {
-        id: 8,
-        type: "transfer",
-        day: 0,
-        lane: 4,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Ступино → Подольск: приём заявок 1",
-        note: "Заявки до 18:00 понедельника."
-      },
-      {
-        id: 9,
-        type: "transfer",
-        day: 2,
-        lane: 1,
-        start: 9 * 60,
-        end: 16 * 60,
-        title: "Ступино → Подольск: отгрузка 1",
-        note: "Заявки, созданные до 18:00 понедельника, отгружаются в среду. XL-формат допустим."
-      },
-      {
-        id: 10,
-        type: "transfer",
-        day: 2,
-        lane: 2,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Ступино → Подольск: приём заявок 2",
-        note: "Заявки до 18:00 среды, включая заявки вторника."
-      },
-      {
-        id: 11,
-        type: "transfer",
-        day: 4,
-        lane: 0,
-        start: 9 * 60,
-        end: 16 * 60,
-        title: "Ступино → Подольск: отгрузка 2",
-        note: "Заявки, созданные до 18:00 среды, отгружаются в пятницу, включая заявки вторника. XL-формат допустим."
-      },
-      {
-        id: 12,
-        type: "transfer",
-        day: 3,
-        lane: 0,
-        start: 8 * 60,
-        end: 18 * 60,
-        title: "Ступино → Подольск: приём заявок 3",
-        note: "Заявки до 18:00 четверга."
-      },
-      {
-        id: 13,
-        type: "transfer",
-        day: 0,
-        lane: 5,
-        start: 8 * 60,
-        end: 20 * 60,
-        title: "Ступино → Подольск: отгрузка 3",
-        note: "Заявки, созданные до 18:00 четверга, отгружаются в понедельник. XL-формат допустим."
-      }
+      { id:1, type:"pickup", day:0, lane:0, start:8*60,  end:12*60, title:"Самовывоз: приём заявок", note:"Реализации, созданные в 1С до 12:00 текущего дня, собираем и отгружаем в этот же день." },
+      { id:2, type:"pickup", day:0, lane:1, start:12*60, end:20*60, title:"Самовывоз: отгрузка следующего рабочего дня", note:"Заявки на самовывоз, созданные после 12:00 текущего дня, отгружаются на следующий рабочий день в интервале 09:00–20:00. Заезд на территорию до 19:00." },
+      { id:3, type:"delivery", day:0, lane:2, start:8*60, end:18*60, title:"Доставка: приём заявок", note:"Заявки на отгрузку, созданные в 1С до 18:00 текущего дня, отгружаются и доставляются через один рабочий день. Выходные не считаем." },
+      { id:4, type:"transfer", day:0, lane:3, start:8*60, end:17*60, title:"Ступино → СПБ: приём заявок", note:"Заявки, созданные в 1С до 17:00 понедельника." },
+      { id:5, type:"transfer", day:1, lane:0, start:14*60,end:20*60, title:"Ступино → СПБ: отгрузка", note:"Отгрузка во вторник с 14:00. Перемещение один раз в неделю. XL-формат допустим." },
+      { id:6, type:"transfer", day:0, lane:4, start:8*60, end:18*60, title:"Ступино → Шереметьево: приём заявок", note:"Заявки, созданные в 1С до 18:00 понедельника." },
+      { id:7, type:"transfer", day:2, lane:0, start:9*60, end:16*60, title:"Ступино → Шереметьево: отгрузка", note:"Отгрузка в среду. Перемещение один раз в неделю. XL-формат допустим." },
+      { id:8, type:"transfer", day:0, lane:5, start:8*60, end:18*60, title:"Ступино → Подольск: приём заявок 1", note:"Заявки, созданные в 1С до 18:00 понедельника." },
+      { id:9, type:"transfer", day:2, lane:1, start:9*60, end:16*60, title:"Ступино → Подольск: отгрузка 1", note:"Заявки, созданные в 1С до 18:00 понедельника, отгружаются в среду. XL-формат допустим." },
+      { id:10,type:"transfer", day:2, lane:2, start:8*60, end:18*60, title:"Ступино → Подольск: приём заявок 2", note:"Заявки, созданные в 1С до 18:00 среды, включая заявки вторника." },
+      { id:11,type:"transfer", day:4, lane:0, start:9*60, end:16*60, title:"Ступино → Подольск: отгрузка 2", note:"Заявки, созданные в 1С до 18:00 среды, отгружаются в пятницу, включая заявки вторника. XL-формат допустим." },
+      { id:12,type:"transfer", day:3, lane:0, start:8*60, end:18*60, title:"Ступино → Подольск: приём заявок 3", note:"Заявки, созданные в 1С до 18:00 четверга." },
+      { id:13,type:"transfer", day:0, lane:6, start:8*60, end:20*60, title:"Ступино → Подольск: отгрузка 3", note:"Заявки, созданные в 1С до 18:00 четверга, отгружаются в понедельник. XL-формат допустим." }
     ];
 
     let events = structuredClone(INITIAL_EVENTS);
-    let selectedId = events[0]?.id || null;
+    let selectedId = events[0]?.id ?? null;
     let dragState = null;
 
     const board = document.getElementById("board");
     const sidebar = document.getElementById("sidebar");
-    const addPickupBtn = document.getElementById("addPickup");
-    const addDeliveryBtn = document.getElementById("addDelivery");
-    const addTransferBtn = document.getElementById("addTransfer");
-    const resetBtn = document.getElementById("resetBtn");
-    const exportBtn = document.getElementById("exportBtn");
 
-    function snapMinutes(minutes){
-      return Math.round(minutes / SNAP_MINUTES) * SNAP_MINUTES;
-    }
+    document.getElementById("addPickup").addEventListener("click", () => createEvent("pickup"));
+    document.getElementById("addDelivery").addEventListener("click", () => createEvent("delivery"));
+    document.getElementById("addTransfer").addEventListener("click", () => createEvent("transfer"));
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      events = structuredClone(INITIAL_EVENTS);
+      selectedId = events[0]?.id ?? null;
+      render();
+    });
+    document.getElementById("exportBtn").addEventListener("click", exportJSON);
 
-    function clamp(val, min, max){
-      return Math.max(min, Math.min(max, val));
-    }
-
+    function snapMinutes(v){ return Math.round(v / SNAP_MINUTES) * SNAP_MINUTES; }
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
     function formatTime(minutes){
       const h = Math.floor(minutes / 60);
       const m = minutes % 60;
-      return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+      return String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0");
     }
-
+    function parseTimeInput(value){
+      const [h,m] = value.split(":").map(Number);
+      return h * 60 + m;
+    }
     function minutesToX(minutes){
       return ((minutes - START_HOUR * 60) / 60) * HOUR_WIDTH;
     }
-
     function xToMinutes(px){
       return START_HOUR * 60 + (px / HOUR_WIDTH) * 60;
     }
-
-    function getDayEvents(dayIndex){
-      return events.filter(e => e.day === dayIndex);
+    function escapeHtml(text){
+      return String(text)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
     }
-
-    function getLaneCount(dayIndex){
-      const dayEvents = getDayEvents(dayIndex);
-      const maxLane = dayEvents.length ? Math.max(...dayEvents.map(e => e.lane)) : 0;
-      return Math.max(maxLane + 1, 2);
-    }
-
     function getEventById(id){
       return events.find(e => e.id === id);
+    }
+    function getDayEvents(day){
+      return events.filter(e => e.day === day);
+    }
+    function getLaneCount(day){
+      const dayEvents = getDayEvents(day);
+      const maxLane = dayEvents.length ? Math.max(...dayEvents.map(e => e.lane)) : 0;
+      return Math.max(maxLane + 1, 2);
     }
 
     function selectEvent(id){
@@ -641,13 +319,8 @@
       render();
     }
 
-    function setEvents(next){
-      events = next;
-      render();
-    }
-
     function exportJSON(){
-      const blob = new Blob([JSON.stringify(events, null, 2)], { type: "application/json;charset=utf-8" });
+      const blob = new Blob([JSON.stringify(events, null, 2)], { type:"application/json;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -656,34 +329,9 @@
       URL.revokeObjectURL(url);
     }
 
-    function normalizeLanes(){
-      for(let day = 0; day < DAYS.length; day++){
-        const dayEvents = events
-          .filter(e => e.day === day)
-          .sort((a,b) => a.lane - b.lane || a.start - b.start);
-
-        const used = [];
-        for(const ev of dayEvents){
-          let lane = 0;
-          while(true){
-            const conflict = dayEvents.some(other =>
-              other.id !== ev.id &&
-              used.includes(other.id) &&
-              other.lane === lane &&
-              !(ev.end <= other.start || ev.start >= other.end)
-            );
-            if(!conflict) break;
-            lane++;
-          }
-          ev.lane = lane;
-          used.push(ev.id);
-        }
-      }
-    }
-
     function createEvent(type){
       const nextId = events.length ? Math.max(...events.map(e => e.id)) + 1 : 1;
-      const ev = {
+      events.push({
         id: nextId,
         type,
         day: 0,
@@ -694,11 +342,50 @@
         note: type === "transfer"
           ? "XL-формат допустим, при необходимости уточни подпись."
           : "Измени подпись и время."
-      };
-      events.push(ev);
-      normalizeLanes();
+      });
       selectedId = nextId;
       render();
+    }
+
+    function normalizeLanes(){
+      for(let day = 0; day < DAYS.length; day++){
+        const dayEvents = events
+          .filter(e => e.day === day)
+          .sort((a,b) => a.start - b.start || a.end - b.end);
+
+        const laneEnds = [];
+        for(const ev of dayEvents){
+          let lane = 0;
+          while(laneEnds[lane] !== undefined && ev.start < laneEnds[lane]){
+            lane++;
+          }
+          ev.lane = lane;
+          laneEnds[lane] = ev.end;
+        }
+      }
+    }
+
+    function getDayTop(dayIndex){
+      let top = HEADER_H;
+      for(let d = 0; d < dayIndex; d++){
+        top += getLaneCount(d) * LANE_STEP;
+      }
+      return top;
+    }
+
+    function getDayFromBoardY(y){
+      let cursor = HEADER_H;
+      for(let d = 0; d < DAYS.length; d++){
+        const h = getLaneCount(d) * LANE_STEP;
+        if(y >= cursor && y < cursor + h) return d;
+        cursor += h;
+      }
+      return DAYS.length - 1;
+    }
+
+    function getLaneFromBoardY(y, day){
+      const top = getDayTop(day);
+      return Math.max(0, Math.floor((y - top) / LANE_STEP));
     }
 
     function render(){
@@ -712,10 +399,9 @@
       const header = document.createElement("div");
       header.className = "time-header";
 
-      const leftTop = document.createElement("div");
-      leftTop.className = "time-cell";
-      leftTop.textContent = "";
-      header.appendChild(leftTop);
+      const emptyCell = document.createElement("div");
+      emptyCell.className = "time-cell";
+      header.appendChild(emptyCell);
 
       for(let h = START_HOUR; h < END_HOUR; h++){
         const cell = document.createElement("div");
@@ -726,43 +412,41 @@
 
       board.appendChild(header);
 
-      for(let dayIndex = 0; dayIndex < DAYS.length; dayIndex++){
+      for(let day = 0; day < DAYS.length; day++){
         const row = document.createElement("div");
         row.className = "day-row";
 
         const label = document.createElement("div");
         label.className = "day-label";
-        label.textContent = DAYS[dayIndex];
+        label.textContent = DAYS[day];
         row.appendChild(label);
 
         const grid = document.createElement("div");
         grid.className = "day-grid";
-        grid.dataset.day = dayIndex;
+        grid.dataset.day = day;
+        grid.style.height = (getLaneCount(day) * LANE_STEP) + "px";
 
-        const laneCount = getLaneCount(dayIndex);
-        grid.style.height = (laneCount * (56 + 12)) + "px";
-
-        for(let lane = 0; lane < laneCount; lane++){
+        for(let lane = 0; lane < getLaneCount(day); lane++){
           const laneEl = document.createElement("div");
           laneEl.className = "lane";
-          laneEl.dataset.day = dayIndex;
+          laneEl.dataset.day = day;
           laneEl.dataset.lane = lane;
           grid.appendChild(laneEl);
         }
 
-        const dayEvents = getDayEvents(dayIndex);
-        dayEvents.forEach(ev => {
-          const eventEl = document.createElement("div");
-          eventEl.className = "event " + ev.type + (ev.id === selectedId ? " selected" : "");
-          eventEl.dataset.id = ev.id;
+        const dayEvents = getDayEvents(day);
+        for(const ev of dayEvents){
+          const el = document.createElement("div");
+          el.className = "event " + ev.type + (ev.id === selectedId ? " selected" : "");
+          el.dataset.id = ev.id;
 
-          const width = Math.max(minutesToX(ev.end) - minutesToX(ev.start), 40);
           const left = minutesToX(ev.start);
-          const top = ev.lane * (56 + 12) + 24;
+          const width = Math.max(40, minutesToX(ev.end) - minutesToX(ev.start));
+          const top = ev.lane * LANE_STEP + 24;
 
-          eventEl.style.left = left + "px";
-          eventEl.style.top = top + "px";
-          eventEl.style.width = width + "px";
+          el.style.left = left + "px";
+          el.style.width = width + "px";
+          el.style.top = top + "px";
 
           const labelEl = document.createElement("div");
           labelEl.className = "event-label";
@@ -778,35 +462,25 @@
           const arrow = document.createElement("div");
           arrow.className = "event-arrow";
 
-          const handleLeft = document.createElement("div");
-          handleLeft.className = "handle left";
-          handleLeft.dataset.action = "resize-left";
+          const leftHandle = document.createElement("div");
+          leftHandle.className = "handle left";
+          leftHandle.dataset.action = "resize-left";
 
-          const handleRight = document.createElement("div");
-          handleRight.className = "handle right";
-          handleRight.dataset.action = "resize-right";
+          const rightHandle = document.createElement("div");
+          rightHandle.className = "handle right";
+          rightHandle.dataset.action = "resize-right";
 
-          eventEl.appendChild(labelEl);
-          eventEl.appendChild(timeEl);
-          eventEl.appendChild(body);
-          eventEl.appendChild(arrow);
-          eventEl.appendChild(handleLeft);
-          eventEl.appendChild(handleRight);
+          el.appendChild(labelEl);
+          el.appendChild(timeEl);
+          el.appendChild(body);
+          el.appendChild(arrow);
+          el.appendChild(leftHandle);
+          el.appendChild(rightHandle);
 
-          eventEl.addEventListener("pointerdown", onEventPointerDown);
-          eventEl.addEventListener("click", (e) => {
-            e.stopPropagation();
-            selectEvent(ev.id);
-          });
+          el.addEventListener("pointerdown", onPointerDownEvent);
 
-          grid.appendChild(eventEl);
-        });
-
-        grid.addEventListener("click", () => {
-          selectedId = null;
-          renderSidebar();
-          renderBoard();
-        });
+          grid.appendChild(el);
+        }
 
         row.appendChild(grid);
         board.appendChild(row);
@@ -815,12 +489,13 @@
 
     function renderSidebar(){
       const ev = getEventById(selectedId);
+
       if(!ev){
         sidebar.innerHTML = `
           <div class="hint">Выбери событие на диаграмме.</div>
           <div class="footer-note">
             Можно перетаскивать событие по времени, между днями и по дорожкам внутри дня.
-            Текст вынесен над событием, чтобы в один день было удобно размещать несколько операций.
+            Растягивание делается за чёрные ручки слева и справа.
           </div>
         `;
         return;
@@ -835,15 +510,15 @@
         <div class="field">
           <label>Тип</label>
           <select id="fieldType">
-            <option value="pickup" ${ev.type === "pickup" ? "selected":""}>Самовывоз</option>
-            <option value="delivery" ${ev.type === "delivery" ? "selected":""}>Доставка</option>
-            <option value="transfer" ${ev.type === "transfer" ? "selected":""}>Перемещение</option>
+            <option value="pickup" ${ev.type==="pickup"?"selected":""}>Самовывоз</option>
+            <option value="delivery" ${ev.type==="delivery"?"selected":""}>Доставка</option>
+            <option value="transfer" ${ev.type==="transfer"?"selected":""}>Перемещение</option>
           </select>
         </div>
 
         <div class="field">
           <label>Название</label>
-          <input id="fieldTitle" type="text" value="${escapeHtml(ev.title)}" />
+          <input id="fieldTitle" type="text" value="${escapeHtml(ev.title)}">
         </div>
 
         <div class="field">
@@ -861,103 +536,88 @@
         <div class="grid-2">
           <div class="field">
             <label>Начало</label>
-            <input id="fieldStart" type="time" step="900" value="${formatTime(ev.start)}" />
+            <input id="fieldStart" type="time" step="900" value="${formatTime(ev.start)}">
           </div>
           <div class="field">
             <label>Окончание</label>
-            <input id="fieldEnd" type="time" step="900" value="${formatTime(ev.end)}" />
+            <input id="fieldEnd" type="time" step="900" value="${formatTime(ev.end)}">
           </div>
         </div>
 
         <div class="field">
           <label>Дорожка внутри дня</label>
-          <input id="fieldLane" type="number" min="0" step="1" value="${ev.lane}" />
+          <input id="fieldLane" type="number" min="0" step="1" value="${ev.lane}">
         </div>
 
         <button class="btn danger" id="deleteBtn" style="width:100%;">Удалить событие</button>
 
         <div class="footer-note">
-          Правила, внесённые в схему: самовывоз до/после 12:00, доставка до 18:00 через один рабочий день,
-          Ступино → СПБ до 17:00 понедельника и отгрузка во вторник с 14:00,
-          Шереметьево до 18:00 понедельника и отгрузка в среду,
-          Подольск: понедельник → среда, среда → пятница, четверг → понедельник.
-          Для перемещений указан допуск XL-формата.
+          Внесены условия по самовывозу, доставке и перемещениям Ступино → СПБ, Шереметьево, Подольск.
+          Для перемещений оставлена пометка про XL-формат.
         </div>
       `;
 
-      document.getElementById("fieldType").addEventListener("change", (e) => {
+      document.getElementById("fieldType").addEventListener("change", e => {
         ev.type = e.target.value;
         render();
       });
 
-      document.getElementById("fieldTitle").addEventListener("input", (e) => {
+      document.getElementById("fieldTitle").addEventListener("input", e => {
         ev.title = e.target.value;
         renderBoard();
       });
 
-      document.getElementById("fieldNote").addEventListener("input", (e) => {
+      document.getElementById("fieldNote").addEventListener("input", e => {
         ev.note = e.target.value;
       });
 
-      document.getElementById("fieldDay").addEventListener("change", (e) => {
+      document.getElementById("fieldDay").addEventListener("change", e => {
         ev.day = Number(e.target.value);
         normalizeLanes();
         render();
       });
 
-      document.getElementById("fieldStart").addEventListener("change", (e) => {
-        const val = parseTimeInput(e.target.value);
-        ev.start = clamp(snapMinutes(val), START_HOUR * 60, ev.end - MIN_DURATION);
+      document.getElementById("fieldStart").addEventListener("change", e => {
+        const val = clamp(snapMinutes(parseTimeInput(e.target.value)), START_HOUR*60, ev.end - MIN_DURATION);
+        ev.start = val;
+        normalizeLanes();
         render();
       });
 
-      document.getElementById("fieldEnd").addEventListener("change", (e) => {
-        const val = parseTimeInput(e.target.value);
-        ev.end = clamp(snapMinutes(val), ev.start + MIN_DURATION, END_HOUR * 60);
+      document.getElementById("fieldEnd").addEventListener("change", e => {
+        const val = clamp(snapMinutes(parseTimeInput(e.target.value)), ev.start + MIN_DURATION, END_HOUR*60);
+        ev.end = val;
+        normalizeLanes();
         render();
       });
 
-      document.getElementById("fieldLane").addEventListener("input", (e) => {
+      document.getElementById("fieldLane").addEventListener("input", e => {
         ev.lane = Math.max(0, Number(e.target.value || 0));
         renderBoard();
       });
 
       document.getElementById("deleteBtn").addEventListener("click", () => {
         events = events.filter(x => x.id !== ev.id);
-        selectedId = events[0]?.id || null;
+        selectedId = events[0]?.id ?? null;
         normalizeLanes();
         render();
       });
     }
 
-    function parseTimeInput(value){
-      const [h,m] = value.split(":").map(Number);
-      return h * 60 + m;
-    }
-
-    function escapeHtml(text){
-      return String(text)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;");
-    }
-
-    function onEventPointerDown(e){
-      e.stopPropagation();
-
+    function onPointerDownEvent(e){
       const eventEl = e.currentTarget;
       const id = Number(eventEl.dataset.id);
       const ev = getEventById(id);
       if(!ev) return;
 
+      e.preventDefault();
+      e.stopPropagation();
+
       selectedId = id;
-      renderSidebar();
-      renderBoard();
 
       const action = e.target.dataset.action || "move";
-
       const boardRect = board.getBoundingClientRect();
+
       dragState = {
         id,
         action,
@@ -970,9 +630,10 @@
         boardRect
       };
 
-      eventEl.setPointerCapture?.(e.pointerId);
+      document.body.classList.add("dragging");
       window.addEventListener("pointermove", onPointerMove);
       window.addEventListener("pointerup", onPointerUp);
+      render();
     }
 
     function onPointerMove(e){
@@ -981,33 +642,33 @@
       if(!ev) return;
 
       const dx = e.clientX - dragState.startClientX;
-      const minutesDelta = snapMinutes((dx / HOUR_WIDTH) * 60);
+      const boardX = e.clientX - dragState.boardRect.left - 170;
+      const boardY = e.clientY - dragState.boardRect.top;
 
       if(dragState.action === "move"){
         const duration = dragState.originalEnd - dragState.originalStart;
-        let nextStart = dragState.originalStart + minutesDelta;
-        nextStart = clamp(nextStart, START_HOUR * 60, END_HOUR * 60 - duration);
-        let nextEnd = nextStart + duration;
 
-        const yWithinBoard = e.clientY - dragState.boardRect.top;
-        const dayIndex = clamp(getDayFromY(yWithinBoard), 0, DAYS.length - 1);
-        const lane = Math.max(0, getLaneFromY(yWithinBoard, dayIndex));
+        let nextStart = snapMinutes(dragState.originalStart + (dx / HOUR_WIDTH) * 60);
+        nextStart = clamp(nextStart, START_HOUR*60, END_HOUR*60 - duration);
 
-        ev.day = dayIndex;
-        ev.lane = lane;
+        const nextDay = clamp(getDayFromBoardY(boardY), 0, DAYS.length - 1);
+        const nextLane = Math.max(0, getLaneFromBoardY(boardY, nextDay));
+
         ev.start = nextStart;
-        ev.end = nextEnd;
+        ev.end = nextStart + duration;
+        ev.day = nextDay;
+        ev.lane = nextLane;
       }
 
       if(dragState.action === "resize-left"){
-        let nextStart = dragState.originalStart + minutesDelta;
-        nextStart = clamp(nextStart, START_HOUR * 60, dragState.originalEnd - MIN_DURATION);
+        let nextStart = snapMinutes(xToMinutes(boardX));
+        nextStart = clamp(nextStart, START_HOUR*60, ev.end - MIN_DURATION);
         ev.start = nextStart;
       }
 
       if(dragState.action === "resize-right"){
-        let nextEnd = dragState.originalEnd + minutesDelta;
-        nextEnd = clamp(nextEnd, dragState.originalStart + MIN_DURATION, END_HOUR * 60);
+        let nextEnd = snapMinutes(xToMinutes(boardX));
+        nextEnd = clamp(nextEnd, ev.start + MIN_DURATION, END_HOUR*60);
         ev.end = nextEnd;
       }
 
@@ -1017,51 +678,28 @@
 
     function onPointerUp(){
       if(!dragState) return;
-      normalizeLanes();
       dragState = null;
+      document.body.classList.remove("dragging");
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
+      normalizeLanes();
       render();
     }
 
-    function getDayFromY(y){
-      const header = 52;
-      let current = header;
-      for(let day = 0; day < DAYS.length; day++){
-        const lanes = getLaneCount(day);
-        const dayHeight = lanes * (56 + 12);
-        if(y >= current && y < current + dayHeight){
-          return day;
-        }
-        current += dayHeight;
+    function getDayFromBoardY(y){
+      let cursor = HEADER_H;
+      for(let d = 0; d < DAYS.length; d++){
+        const h = getLaneCount(d) * LANE_STEP;
+        if(y >= cursor && y < cursor + h) return d;
+        cursor += h;
       }
       return DAYS.length - 1;
     }
 
-    function getLaneFromY(y, targetDay){
-      const header = 52;
-      let current = header;
-      for(let day = 0; day < DAYS.length; day++){
-        const lanes = getLaneCount(day);
-        const dayHeight = lanes * (56 + 12);
-        if(day === targetDay){
-          const innerY = y - current;
-          return Math.floor(innerY / (56 + 12));
-        }
-        current += dayHeight;
-      }
-      return 0;
+    function getLaneFromBoardY(y, day){
+      const top = getDayTop(day);
+      return Math.floor(Math.max(0, y - top) / LANE_STEP);
     }
-
-    addPickupBtn.addEventListener("click", () => createEvent("pickup"));
-    addDeliveryBtn.addEventListener("click", () => createEvent("delivery"));
-    addTransferBtn.addEventListener("click", () => createEvent("transfer"));
-    resetBtn.addEventListener("click", () => {
-      events = structuredClone(INITIAL_EVENTS);
-      selectedId = events[0]?.id || null;
-      render();
-    });
-    exportBtn.addEventListener("click", exportJSON);
 
     normalizeLanes();
     render();
